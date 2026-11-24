@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web &amp; Security Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== 1. DESIGN TOKENS (change these to re-theme every course) ===== */
+:root{
+  --bg:#090a0f;--surface:#12141c;--surface-subtle:#171a24;
+  --console-bg:#0c0e14;--console-border:#222634;
+  --text:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--border:#1e2230;
+  --accent:#38bdf8;--accent-soft:rgba(56,189,248,.1);--accent-border:rgba(56,189,248,.28);
+  --success:#34d399;--success-soft:rgba(52,211,153,.12);
+  --warn:#fbbf24;--warn-soft:rgba(251,191,36,.12);
+  --danger:#fb7185;--danger-soft:rgba(251,113,133,.14);
+  --radius:14px;--shadow:0 12px 32px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.65}
+code,.mono{font-family:'JetBrains Mono',monospace}
+body{padding-bottom:72px}
+
+/* ===== 2. COPY PROTECTION (deterrent) ===== */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+img{-webkit-user-drag:none;pointer-events:none}
+@media print{body>*:not(#wm-bar){display:none!important}body::before{content:"Printing is disabled.";display:block;padding:40px;color:#000}}
+
+/* ===== 3. HEADER ===== */
+.exec-header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:14px 28px}
+.eh-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.eh-brand{display:flex;align-items:center;gap:12px}
+.eh-logo{width:34px;height:34px;border-radius:9px;background:var(--surface-subtle);border:1px solid var(--accent-border);display:grid;place-items:center;font:700 12px 'JetBrains Mono',monospace;color:var(--accent)}
+.eh-title{font-size:14.5px;font-weight:600;letter-spacing:-.2px}
+.eh-sub{font-size:12px;color:var(--text-muted);margin-left:8px;padding-left:8px;border-left:1px solid var(--border)}
+@media(max-width:640px){.eh-sub{display:none}}
+.eh-right{display:flex;align-items:center;gap:14px}
+.progress-pill{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);padding:6px 12px;border-radius:99px;font:11.5px 'JetBrains Mono',monospace;color:var(--text-secondary)}
+.pp-bar{width:88px;height:5px;border-radius:99px;background:var(--border);overflow:hidden}
+.pp-fill{height:100%;width:10%;background:var(--accent);transition:width .3s ease}
+.cheat-btn{font:500 12.5px 'Inter',sans-serif;padding:6px 13px;border-radius:8px;cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);transition:all .15s}
+.cheat-btn:hover{border-color:var(--accent);color:var(--text)}
+
+/* ===== 4. SHELL: sidebar + lesson stage ===== */
+.app-shell{max-width:1200px;margin:28px auto 72px;padding:0 28px;display:grid;grid-template-columns:260px 1fr;gap:36px;align-items:start}
+@media(max-width:940px){.app-shell{grid-template-columns:1fr;gap:24px;padding:0 18px}}
+.syllabus-nav{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 12px;box-shadow:var(--shadow);position:sticky;top:78px}
+@media(max-width:940px){.syllabus-nav{position:static}}
+.sn-header{padding:0 10px 12px;border-bottom:1px solid var(--border);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.sn-course{font:600 10.5px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent)}
+.sn-count{font:10.5px 'JetBrains Mono',monospace;color:var(--text-muted)}
+.sn-group{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);padding:12px 10px 5px}
+.sn-item{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:8.5px 10px;border-radius:8px;border:1px solid transparent;background:transparent;font:13px 'Inter',sans-serif;color:var(--text-secondary);cursor:pointer;transition:all .15s}
+.sn-item-left{display:flex;align-items:center;gap:9px;min-width:0}
+.sn-item:hover{background:var(--surface-subtle);color:var(--text)}
+.sn-item.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-border);font-weight:600}
+.sn-num{font:11px 'JetBrains Mono',monospace;opacity:.75;flex:0 0 20px}
+.sn-check{font:11px 'JetBrains Mono',monospace;color:var(--accent);opacity:0}
+.sn-item.visited .sn-check{opacity:1}
+
+.lesson-stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:44px 50px;box-shadow:var(--shadow);min-width:0}
+@media(max-width:680px){.lesson-stage{padding:26px 20px}}
+.lh-meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.lh-step{font:600 11.5px 'JetBrains Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:1px}
+.lh-progress{font:11.5px 'JetBrains Mono',monospace;color:var(--text-muted)}
+.lh-title{font-size:32px;font-weight:700;line-height:1.22;letter-spacing:-.5px;margin-bottom:14px}
+.lh-lead{font-size:16.5px;line-height:1.78;color:var(--text-secondary);padding-bottom:28px;border-bottom:1px solid var(--border);margin-bottom:34px}
+.lh-lead strong{color:var(--text);font-weight:600}
+.block-section{margin-bottom:36px}
+.block-label{font:600 11px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:14px;display:flex;justify-content:space-between}
+
+/* ===== 5. CONCEPT CARDS ===== */
+.concept-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:760px){.concept-grid{grid-template-columns:1fr}}
+.concept-card{background:var(--surface-subtle);border:1px solid var(--border);border-radius:11px;padding:20px;display:flex;flex-direction:column;gap:6px}
+.cc-tag{font:600 11px 'JetBrains Mono',monospace;color:var(--accent)}
+.cc-title{font-size:15px;font-weight:600}
+.cc-body{font-size:13.5px;line-height:1.65;color:var(--text-secondary)}
+.cc-code,.cc-body code{font:12px 'JetBrains Mono',monospace;padding:2px 6px;border-radius:5px;background:var(--console-bg);border:1px solid var(--console-border);color:#e2e8f0}
+
+/* ===== 6. INTERACTIVE CONSOLE ===== */
+.console-box{background:var(--console-bg);border:1px solid var(--console-border);border-radius:12px;overflow:hidden;color:#f8fafc}
+.cb-top{padding:13px 20px;border-bottom:1px solid var(--console-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.015)}
+.cb-title{font:12px 'JetBrains Mono',monospace;color:#94a3b8;display:flex;align-items:center;gap:8px}
+.cb-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.cb-presets{display:flex;gap:7px;flex-wrap:wrap}
+.cb-btn{font:500 11.5px 'JetBrains Mono',monospace;padding:6.5px 12px;border-radius:7px;border:1px solid var(--console-border);background:var(--surface-subtle);color:#cbd5e1;cursor:pointer;transition:all .15s}
+.cb-btn:hover{border-color:#475569;color:#fff}
+.cb-btn.active{background:var(--accent);color:#090a0f;border-color:var(--accent);font-weight:600}
+.cb-query-bar{padding:16px 20px;border-bottom:1px solid var(--console-border);font:13.5px 'JetBrains Mono',monospace;color:#e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(0,0,0,.25);line-height:1.6}
+.sql-kw{color:var(--accent);font-weight:600}.sql-str{color:color-mix(in srgb,var(--accent) 55%,#fff)}.sql-num{color:var(--warn)}
+.sql-inj{color:var(--danger);background:var(--danger-soft);padding:2px 6px;border-radius:4px;font-weight:600}
+.sql-comment{color:#64748b;text-decoration:line-through;font-style:italic}
+.cb-status{font:11.5px 'JetBrains Mono',monospace;padding:4px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.cb-status.warn{background:var(--warn-soft);color:var(--warn)}
+.cb-status.danger{background:var(--danger-soft);color:var(--danger)}
+.cb-table-wrap{padding:16px 20px;overflow-x:auto}
+.cb-table{width:100%;border-collapse:collapse;font:12.5px 'JetBrains Mono',monospace}
+.cb-table th{text-align:left;padding:9px 12px;color:#94a3b8;border-bottom:1px solid var(--console-border);font-weight:500}
+.cb-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:#cbd5e1}
+.cb-table tr:last-child td{border-bottom:none}
+.cb-table tr.matched td{background:var(--accent-soft);color:#fff}
+.cb-table tr.filtered td{opacity:.5}
+.cb-explain{padding:15px 20px;background:var(--accent-soft);border-top:1px solid var(--console-border);font-size:13.5px;color:#e2e8f0;line-height:1.65}
+.cb-explain strong{color:#fff}.cb-explain code{font:12.5px 'JetBrains Mono',monospace;color:var(--accent)}
+
+/* ===== 7. NOTES + CHECK QUESTION ===== */
+.notes-card{background:var(--surface-subtle);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:11px;padding:22px 26px}
+.nc-head{font:600 11px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between}
+.nc-list{padding-left:18px;font-size:14.5px;line-height:1.78;color:var(--text-secondary)}
+.nc-list li{margin-bottom:7px}.nc-list li:last-child{margin-bottom:0}
+.nc-list strong{color:var(--text);font-weight:600}
+.nc-list code{font:12.5px 'JetBrains Mono',monospace;padding:1.5px 5px;border-radius:4px;background:var(--console-bg);border:1px solid var(--border);color:#e2e8f0}
+.classroom-prompt{margin-top:16px;padding-top:14px;border-top:1px dashed var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.cp-question{font-size:13.5px;font-weight:500;flex:1;min-width:220px}
+.cp-question span{font:11px 'JetBrains Mono',monospace;color:var(--warn);text-transform:uppercase;margin-right:8px}
+.cp-btn{font:11.5px 'JetBrains Mono',monospace;padding:5px 11px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);cursor:pointer}
+.cp-btn:hover{border-color:var(--accent);color:var(--text)}
+.cp-answer{width:100%;display:none;margin-top:8px;padding:11px 14px;border-radius:8px;background:var(--console-bg);border:1px solid var(--border);font-size:13px;color:var(--text-secondary)}
+.cp-answer.show{display:block}.cp-answer strong{color:var(--accent)}
+
+/* ===== 8. FOOTER NAV + MODAL ===== */
+.stage-footer{margin-top:38px;padding-top:24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.sf-btn{font:600 13.5px 'Inter',sans-serif;padding:10px 20px;border-radius:9px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--surface-subtle);color:var(--text)}
+.sf-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.sf-btn:disabled{opacity:.35;cursor:not-allowed}
+.sf-btn.primary{background:var(--accent);color:#090a0f;border-color:var(--accent)}
+.sf-btn.primary:hover:not(:disabled){opacity:.9;color:#090a0f}
+.sf-hint{font:11.5px 'JetBrains Mono',monospace;color:var(--text-muted)}
+@media(max-width:640px){.sf-hint{display:none}}
+.modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:880px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.mc-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mc-title{font-size:16px;font-weight:600}
+.mc-close{background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:13px}
+.mc-body{padding:20px 24px;overflow-y:auto}
+
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:18px 20px}
+.fc{background:var(--surface-subtle);border:1px solid var(--console-border);border-radius:9px;padding:13px;display:flex;flex-direction:column;gap:6px}
+.fc-s{font:10.5px 'JetBrains Mono',monospace;color:var(--accent);text-transform:uppercase}
+.fc-c{font:12px 'JetBrains Mono',monospace;color:var(--accent);background:var(--bg);padding:7px 9px;border-radius:6px;border:1px solid var(--border);word-break:break-word}
+.fc-d{font-size:12px;color:var(--text-secondary);line-height:1.5}
+/* visual engine */
+.vis-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.vis-card{background:var(--console-bg);border:1px solid var(--console-border);border-radius:12px;overflow:hidden}
+.diag{display:block;width:100%;height:auto}
+.dn{fill:var(--surface-subtle);stroke:var(--console-border);stroke-width:1.5;transition:all .25s}
+.dn.on{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.dn.bad{fill:var(--danger-soft);stroke:var(--danger);stroke-width:2.5}
+.de{stroke:#475569;stroke-width:2;fill:none}
+.de.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:7 6;animation:dash .7s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-13}}
+.mk{fill:#475569}.mkOn{fill:var(--accent)}
+.di{font-size:26px;text-anchor:middle}
+.dt{fill:var(--text);font:600 13px Inter,sans-serif;text-anchor:middle}
+.ds{fill:var(--text-muted);font:10.5px 'JetBrains Mono',monospace;text-anchor:middle}
+.dl{fill:var(--text-secondary);font:11px 'JetBrains Mono',monospace;text-anchor:middle;paint-order:stroke;stroke:var(--console-bg);stroke-width:4px}
+.dl.on{fill:var(--accent);font-weight:600}
+.pk{fill:var(--accent);filter:drop-shadow(0 0 6px var(--accent))}
+.vis-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--console-border)}
+.vis-n{margin-left:auto;font:11.5px 'JetBrains Mono',monospace;color:var(--text-muted)}
+.vis-cap{padding:14px 20px;background:var(--accent-soft);border-top:1px solid var(--console-border);font-size:13.5px;color:#e2e8f0;line-height:1.65;min-height:58px}
+.vis-cap b{color:#fff}.vis-cap code{font:12.5px 'JetBrains Mono',monospace;color:var(--accent)}
+.anat{display:flex;flex-direction:column;gap:12px;padding:18px 20px;background:var(--console-bg);border:1px solid var(--console-border);border-radius:12px}
+.ap{display:grid;grid-template-columns:minmax(0,1fr) 22px 250px;gap:10px;align-items:center}
+@media(max-width:760px){.ap{grid-template-columns:1fr}.aar{display:none}}
+.ac{font:12.5px/1.6 'JetBrains Mono',monospace;color:#f1f5f9;border:1px solid;border-radius:9px;padding:10px 14px;white-space:pre-wrap;word-break:break-word;margin:0}
+.al{border:1px solid;border-radius:9px;padding:9px 12px;display:flex;flex-direction:column;font-size:12.5px;color:var(--text-secondary);background:var(--surface-subtle)}
+/* network map */
+.lk{stroke:#334155;stroke-width:2.5}.lk.on{stroke:var(--accent);stroke-width:3.5;fill:none;opacity:.9}
+.dv *{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dv.bad *{stroke:var(--danger);fill:var(--danger-soft)}
+.dv{opacity:.5;transition:opacity .3s}.dv.on{opacity:1}
+.dv.on *{filter:drop-shadow(0 0 5px var(--accent))}.dv.bad.on *{filter:drop-shadow(0 0 5px var(--danger))}
+.pl{fill:#fff;font:600 11px 'JetBrains Mono',monospace;text-anchor:middle;paint-order:stroke;stroke:var(--console-bg);stroke-width:4px}
+.vis-tg{display:flex;gap:7px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--console-border)}
+.vis-pan{padding:14px 18px;border-top:1px solid var(--console-border);overflow-x:auto}
+.insp{display:grid;grid-template-columns:110px 1fr;gap:7px 14px;font-size:13px;color:#e2e8f0}
+.insp b{color:var(--text-muted);font:11px 'JetBrains Mono',monospace;text-transform:uppercase;padding-top:2px}
+.cb-table tr.cur td{background:var(--accent-soft);color:#fff}
+.chip{display:inline-block;padding:2px 8px;border-radius:99px;font:600 11px 'JetBrains Mono',monospace}
+/* ===== 9. THEME DOTS (optional picker) ===== */
+.theme-dots{display:flex;gap:6px}
+.theme-dot{width:14px;height:14px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.theme-dot.on{border-color:#fff}
+</style>
+</head>
+<body>
+
+<header class="exec-header">
+  <div class="eh-inner">
+    <div class="eh-brand">
+      <div class="eh-logo">&gt;_</div>
+      <span class="eh-title" id="brandTitle"></span>
+      <span class="eh-sub" id="brandSub"></span>
+    </div>
+    <div class="eh-right">
+      <div class="theme-dots" id="themeDots"></div>
+      <div class="progress-pill"><span id="topProgressText"></span><div class="pp-bar"><div class="pp-fill" id="topProgressFill"></div></div></div>
+      <button class="cheat-btn" onclick="toggleModal(true)">Quick reference</button>
+    </div>
+  </div>
+</header>
+
+<div class="app-shell">
+  <aside class="syllabus-nav" aria-label="Course syllabus">
+    <div class="sn-header"><span class="sn-course">Syllabus</span><span class="sn-count" id="countLabel"></span></div>
+    <div id="syllabus"></div>
+  </aside>
+
+  <main class="lesson-stage">
+    <div class="lh-meta"><span class="lh-step" id="moduleTag"></span><span class="lh-progress" id="stepCount"></span></div>
+    <h1 class="lh-title" id="lessonTitle"></h1>
+    <p class="lh-lead" id="lessonLead"></p>
+
+    <div class="block-section">
+      <div class="block-label"><span>01 · Core mechanics</span><span>3 key concepts</span></div>
+      <div class="concept-grid" id="cards"></div>
+    </div>
+
+    <div class="block-section" id="visBlock">
+      <div class="block-label"><span>02 · Visual explainer</span><span id="visSub"></span></div>
+      <div id="visual"></div>
+    </div>
+
+    <div class="block-section">
+      <div class="block-label"><span>03 · Interactive console</span><span>Click a preset to test it</span></div>
+      <div class="console-box">
+        <div class="cb-top"><div class="cb-title"><span class="cb-dot"></span><span id="consoleTitle"></span></div><div class="cb-presets" id="presets"></div></div>
+        <div class="cb-query-bar"><div id="queryText"></div><span class="cb-status" id="statusBadge"></span></div>
+        <div class="cb-table-wrap" id="tableWrap"></div>
+        <div class="cb-explain" id="explain"></div>
+      </div>
+    </div>
+
+    <div class="block-section" style="margin-bottom:0">
+      <div class="block-label"><span>04 · Reference notes &amp; check</span><span>Revision summary</span></div>
+      <div class="notes-card">
+        <div class="nc-head"><span>Key takeaways</span><span id="noteBadge"></span></div>
+        <ul class="nc-list" id="notes"></ul>
+        <div class="classroom-prompt">
+          <div class="cp-question"><span>Check:</span><strong id="promptQ"></strong></div>
+          <button class="cp-btn" id="promptBtn" onclick="toggleAnswer()">Reveal answer</button>
+          <div class="cp-answer" id="promptA"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="stage-footer">
+      <button class="sf-btn" id="prevBtn" onclick="stepLesson(-1)">← Previous lesson</button>
+      <span class="sf-hint">Use ← and → to switch lessons</span>
+      <button class="sf-btn primary" id="nextBtn" onclick="stepLesson(1)">Next lesson →</button>
+    </footer>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal-card">
+    <div class="mc-head"><span class="mc-title" id="modalTitle"></span><button class="mc-close" onclick="toggleModal(false)">✕ Close</button></div>
+    <div class="mc-body"><table class="cb-table"><thead><tr id="refHead"></tr></thead><tbody id="refBody"></tbody></table></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   COURSE CONFIG: edit this block only to make a new course
+   ===================================================================== */
+const K=s=>'<span class="sql-kw">'+s+'</span>',S=s=>'<span class="sql-str">'+s+'</span>',I=s=>'<span class="sql-inj">'+s+'</span>';
+const C=(tag,title,body)=>({tag,title,body});
+const P=(label,query,status,cols,rows,highlight,explain,statusType)=>({label,query,status,statusType:statusType||'',cols,rows,highlight,explain});
+const F=(label,query,status,flow,explain,statusType)=>({label,query,status,statusType:statusType||'',flow,explain});
+const COURSE = {
+  brand: 'Web & Security Foundations',
+  subtitle: 'From the web to OWASP Top 10:2025',
+  watermark: 'sonu.ohac',
+  theme: 'violet',
+  showThemePicker: false,
+  modalTitle: 'Quick reference: web, HTTP & OWASP 2025',
+  refColumns: ['Term', 'Category', 'What it means'],
+  reference: [
+    ['<code>DNS</code>','Network','Turns a domain name into an IP address'],
+    ['<code>Port 443 / 80</code>','Network','The “door” for HTTPS / HTTP on a server'],
+    ['<code>GET / POST</code>','Method','Read data / send data to the server'],
+    ['<code>PUT / PATCH / DELETE</code>','Method','Replace / partly update / remove a resource'],
+    ['<code>200 / 301 / 404 / 500</code>','Status','OK / moved / not found / server error'],
+    ['<code>401 vs 403</code>','Status','Not authenticated vs not allowed'],
+    ['<code>Set-Cookie</code>','Header','Server gives the browser a session ID'],
+    ['<code>HttpOnly · Secure · SameSite</code>','Cookie flag','Hide from JS · HTTPS only · limit cross-site use'],
+    ['AAA','Security','Authentication, Authorization, Accounting'],
+    ['Least privilege','Principle','Give only the minimum access needed'],
+    ['Deny by default','Principle','Block everything not explicitly allowed'],
+    ['Defense in depth','Principle','Several layers so one failure is not fatal'],
+    ['Zero trust','Principle','Never trust, always verify'],
+    ['A01–A10','OWASP 2025','The ten most critical web risks, ranked by severity']
+  ],
+  lessons: [
+  { group:'Part 1 · Web Basics', shortTitle:'What is the Web', moduleTag:'Module 01 · Web Basics', title:'What Is the Web and Why Do We Use It?',
+    lead:'The <strong>web</strong> is a huge system of connected computers that share pages and apps over the internet using common rules. You open a <strong>browser</strong>, ask for something, and a <strong>server</strong> sends it back.',
+    cards:[C('Definition','The Web','Websites and apps stored on <strong>web servers</strong> and viewed in a <strong>browser</strong>.'),C('Why we use it','One place for everything','Shopping, banking, learning and chat all follow the same simple model.'),C('Advantages','Global and instant','Works on any device, updates for everyone at once, no installation.')],
+    consoleTitle:'Web vs Internet explorer',
+    presets:[P('1. Web vs Internet',K('INTERNET')+' ≠ '+K('WEB'),'3 terms',['Term','What it is','Analogy'],[['Internet','Network of cables, routers and devices','The roads'],['Web','Pages and apps served over the internet','Shops on the roads'],['Email','Another service on the internet','Post office on the roads']],[1],'<strong>Key idea:</strong> the web is one service that runs <em>on</em> the internet.'),
+      P('2. Advantages and risk','Pros and the catch','4 points',['Point','Detail'],[['Reach','Anyone with a browser can use it'],['Updates','Change the server once, everyone sees it'],['Cost','No install, runs on any device'],['Risk','Anything public can be attacked, which is why we study security']],[3],'<strong>The catch:</strong> being open to everyone also means being open to attackers.','warn')],
+    notes:['<strong>Web ≠ Internet:</strong> the internet is the network; the web is a service on it.','<strong>Why security matters:</strong> every public web app is reachable by anyone.'],
+    promptQ:'Is the web the same thing as the internet?', promptA:'<strong>No.</strong> The internet is the network; the web is one service running on it.' },
+
+  { group:'Part 1 · Web Basics', shortTitle:'Client & Server', moduleTag:'Module 02 · Web Basics', title:'Client–Server Communication: How the Web Works',
+    lead:'Every page load is a <strong>conversation</strong>. The <strong>client</strong> (your browser) sends a <strong>request</strong>; the <strong>server</strong> sends back a <strong>response</strong>.',
+    cards:[C('Client','The browser','Asks for pages and shows results to the user.'),C('Server','The responder','Receives requests, builds the answer, sends it back.'),C('Layers','HTTP over TCP over IP','HTTP is the language, TCP guarantees delivery, IP finds the address.')],
+    consoleTitle:'Request journey tracer',
+    presets:[F('1. Open amazon.in',K('GET')+' https://amazon.in','9 steps',[['1 · URL','amazon.in','You type the address'],['2 · DNS','13.227.170.27','DNS finds the IP'],['3 · Connect','TCP · port 443','Browser reaches the server'],['4 · Request','GET / HTTP/1.1','Browser sends a request'],['5 · Receive','Web server','Server gets the request'],['6 · Process','App + database','Server prepares the page'],['7 · Response','200 OK','Server replies'],['8 · Packets','■ ■ ■ …','Reply travels in small packets'],['9 · Render','Page shown','Browser displays it']],'<strong>The whole web in 9 steps.</strong> Every site you visit follows this flow.'),
+      F('2. Mailman analogy','Letter → Router → ISP → Internet → Amazon','6 stages',[['Write address','amazon.in','The URL on the envelope'],['Local post','Home router','Receives your data'],['City post office','ISP','Takes it to the main network'],['Sorting centres','Internet routers','Forward it onward'],['Destination','Amazon network','Reaches the right building'],['Reply','Same way back','The page returns to you']],'<strong>Analogy:</strong> your data is a letter passing through many sorting centres.'),
+      P('3. TCP/IP layers',K('HTTP')+' → '+K('TCP')+' → '+K('IP'),'3 layers',['Layer','Protocol','Job'],[['Application','HTTP / HTTPS','Web requests and responses'],['Transport','TCP','Reliable, ordered delivery'],['Network','IP','Addressing and routing']],[0],'<strong>HTTPS</strong> is HTTP secured with TLS (encryption and server authentication).')],
+    notes:['<strong>Request, then response:</strong> the client always starts the conversation.','<strong>TCP</strong> retransmits lost data, <strong>IP</strong> routes packets across networks.'],
+    promptQ:'Which side starts the conversation, the client or the server?', promptA:'<strong>The client.</strong> It sends the request; the server responds.' },
+
+  { group:'Part 1 · Web Basics', shortTitle:'URL, Domain & DNS', moduleTag:'Module 03 · Web Basics', title:'URL, Domain, DNS, IP Address and Ports',
+    lead:'People remember <strong>names</strong>, computers use <strong>numbers</strong>. A <strong>URL</strong> points to a resource, a <strong>domain</strong> is its readable name, and <strong>DNS</strong> translates that name into an <strong>IP address</strong>.',
+    cards:[C('URL','The full address','Scheme, host, port, path and query in one string.'),C('DNS','The contacts list','Maps <code>example.com</code> to an IP such as <code>1.2.3.4</code>.'),C('IP vs port','Building and door','The IP finds the server; the port picks the service (443 for HTTPS).')],
+    consoleTitle:'URL & DNS lab',
+    presets:[P('1. URL anatomy','https://shop.example.com:443/login?next=cart','5 parts',['Part','Value','Meaning'],[['Scheme','https','Protocol to use'],['Host','shop.example.com','Which server (domain)'],['Port','443','Which door on the server'],['Path','/login','Which resource'],['Query','?next=cart','Extra parameters']],[1,2],'<strong>Read it left to right:</strong> how, where, which door, what, extras.'),
+      F('2. DNS lookup','example.com → ?','4 hops',[['Client','example.com?','Browser asks the DNS resolver'],['Root server','.com','Points to the TLD server'],['TLD server','example.com','Points to the authoritative server'],['Authoritative','1.2.3.4','Returns the real IP address']],'<strong>Resolver:</strong> asks root, then TLD, then authoritative, and caches the answer.'),
+      P('3. IP vs port','192.168.1.1 : 443','Building vs door',['Item','Example','Analogy'],[['IP address','192.168.1.1','The building'],['Port 443','HTTPS','The secure door'],['Port 80','HTTP','The plain door']],[0,1],'<strong>Remember:</strong> IP gets you to the machine, port gets you to the service.')],
+    notes:['<strong>DNS</strong> is a lookup service; no DNS means no names.','<strong>Default ports:</strong> HTTP 80, HTTPS 443.'],
+    promptQ:'What does DNS do?', promptA:'<strong>It translates a domain name into an IP address.</strong>' },
+
+  { group:'Part 1 · Web Basics', shortTitle:'Web Structure', moduleTag:'Module 04 · Web Basics', title:'Web Structure: Front End, Back End and Database',
+    lead:'Most web apps have <strong>three tiers</strong>. The browser never touches the database directly: the <strong>backend</strong> sits in the middle and decides what happens.',
+    cards:[C('Front end','What the user sees','HTML structure, CSS style and JavaScript behaviour, all in the browser.'),C('Back end','Server-side logic','Processes requests, runs business rules, talks to the database.'),C('Database','Data storage','Users, products and orders, read and updated by the backend.')],
+    consoleTitle:'Three-tier tracer',
+    presets:[F('1. Request path','User → Browser → Backend → Database','3 tiers',[['Front end','HTML · CSS · JS','Shows the page, handles clicks'],['Back end','Web server','Processes requests, enforces rules'],['Database','users · products','Stores and returns data']],'<strong>Rule:</strong> the backend is the gatekeeper between the user and the data.'),
+      P('2. Who does what','Where does the code run?','3 layers',['Layer','Runs on','Example'],[['Front end','User’s browser','Login form'],['Back end','Your server','Checks the password'],['Database','Data server','Stores user records']],[1],'<strong>Security note:</strong> never trust the front end; checks must also happen on the server.')],
+    notes:['<strong>Front end is visible</strong> to the user, so it can be changed by the user.','<strong>Back end must re-check</strong> everything it receives.'],
+    promptQ:'Why can’t the browser talk to the database directly?', promptA:'<strong>Because anyone could then read or change all data.</strong> The backend enforces the rules.' },
+
+  { group:'Part 2 · HTTP', shortTitle:'HTTP Request', moduleTag:'Module 05 · HTTP', title:'HTTP Requests: Parts and Methods',
+    lead:'An <strong>HTTP request</strong> is plain text with three parts. The <strong>method</strong> tells the server what action you want.',
+    cards:[C('Request line','Method + path + version','Example: <code>POST /login HTTP/1.1</code>.'),C('Headers','Extra information','Host, Content-Type, User-Agent, Accept, Connection.'),C('Body','Optional data','Used with POST, PUT and PATCH to carry data.')],
+    consoleTitle:'HTTP request inspector',
+    presets:[P('1. Request anatomy',K('POST')+' /login HTTP/1.1','3 parts',['Part','Example','Purpose'],[['Request line','POST /login HTTP/1.1','Method, resource, version'],['Headers','Host: example.com · Content-Type: application/json','Describe the request'],['Body','{ “username”: “sonu” }','Data sent to the server']],[0],'<strong>Request line</strong> first, then headers, then an optional body.'),
+      P('2. Methods','GET · POST · PUT · PATCH · DELETE','8 methods',['Method','What it does','Simple meaning'],[['GET','Retrieve data','Give me the products'],['POST','Send data','Here is my data, process it'],['PUT','Replace a resource','Replace user 10'],['PATCH','Update part of a resource','Change only this part'],['DELETE','Delete a resource','Delete user 10'],['HEAD','Headers only, no body','Info but not content'],['OPTIONS','Supported methods','What can I do here?'],['QUERY','Query in the body (emerging)','Run this query']],[0,1],'<strong>Safe vs changing:</strong> GET, HEAD and OPTIONS read; POST, PUT, PATCH and DELETE change data.')],
+    notes:['<strong>Headers</strong> carry metadata such as host, type and cookies.','<strong>QUERY</strong> is a newer method still being standardised.'],
+    promptQ:'Which part of an HTTP request is optional?', promptA:'<strong>The body.</strong> A GET usually has none.' },
+
+  { group:'Part 2 · HTTP', shortTitle:'HTTP Response', moduleTag:'Module 06 · HTTP', title:'HTTP Responses: Parts and Status Codes',
+    lead:'The server answers with a <strong>response</strong>. Its first line carries a <strong>status code</strong> that tells you how the request went.',
+    cards:[C('Status line','Version + code + phrase','Example: <code>HTTP/1.1 200 OK</code>.'),C('Headers','Response metadata','Content-Type, Content-Length, Server, Set-Cookie.'),C('Body','The data','HTML, JSON or text, after one blank line.')],
+    consoleTitle:'Status code explorer',
+    presets:[P('1. Response anatomy','HTTP/1.1 200 OK','4 parts',['Part','Example','Purpose'],[['Status line','HTTP/1.1 200 OK','Version, code, reason'],['Headers','Content-Type: application/json · Set-Cookie: session=abc123','Metadata, cookies'],['Blank line','(empty)','Separates headers from body'],['Body','{ “message”: “Login successful” }','The response data']],[0],'<strong>Blank line</strong> is the divider between headers and body.'),
+      P('2. Status classes','1xx · 2xx · 3xx · 4xx · 5xx','5 classes',['Class','Meaning','Used when'],[['1xx','Informational','Request received, continue'],['2xx','Successful','Request worked'],['3xx','Redirection','Further action needed'],['4xx','Client error','Problem with the request'],['5xx','Server error','Server failed a valid request']],[3,4],'<strong>Memory trick:</strong> 4 = your fault, 5 = server’s fault.'),
+      P('3. Common codes','200 · 301 · 401 · 403 · 404 · 500','9 codes',['Code','Meaning','When'],[['200','OK','Request succeeded'],['201','Created','New resource made'],['301','Moved Permanently','New permanent URL'],['302','Found','Temporary redirect'],['401','Unauthorized','Authentication needed or failed'],['403','Forbidden','No permission'],['404','Not Found','Resource missing'],['429','Too Many Requests','Rate limited'],['500','Internal Server Error','Server-side failure']],[4,5],'<strong>401 vs 403:</strong> 401 means “who are you?”, 403 means “you are not allowed”.','warn')],
+    notes:['<strong>Set-Cookie</strong> lives in response headers.','<strong>Error pages</strong> should never leak server details.'],
+    promptQ:'What is the difference between 401 and 403?', promptA:'<strong>401:</strong> not authenticated. <strong>403:</strong> authenticated but not permitted.' },
+
+  { group:'Part 3 · Auth & Security', shortTitle:'Cookies & Sessions', moduleTag:'Module 07 · Authentication', title:'Cookies, Sessions and Authentication',
+    lead:'HTTP forgets you after every request. <strong>Cookies</strong> and <strong>sessions</strong> let a site remember who you are, which is why they are a prime attack target.',
+    cards:[C('Cookie','Small browser note','The server sets it; the browser sends it back on every request.'),C('Session','Server-side memory','The cookie holds an ID; the server stores the real user data.'),C('AAA','Three questions','Authentication, Authorization and Accounting.')],
+    consoleTitle:'Login & session lab',
+    presets:[F('1. Login flow',K('POST')+' /login → Set-Cookie','4 steps',[['Login','POST /login','Browser sends credentials'],['Verify','Server checks','Password compared with the stored hash'],['Cookie','Set-Cookie: session=abc123; HttpOnly','Server issues a session ID'],['Next request','Cookie: session=abc123','Browser replays it automatically']],'<strong>Stateless HTTP,</strong> stateful experience: the cookie is the memory.'),
+      P('2. AAA','Who · What · Did what','3 steps',['Step','Question','Example'],[['Authentication','Who are you?','Password plus MFA'],['Authorization','What may you do?','Student vs admin rights'],['Accounting','What did you do?','Audit logs']],[0,1],'<strong>Order matters:</strong> authenticate first, then authorize, then record.'),
+      P('3. Cookie flags','Set-Cookie flags','3 flags',['Flag','Protects against'],[['HttpOnly','JavaScript reading the cookie'],['Secure','Sending the cookie over plain HTTP'],['SameSite','Cookies sent on cross-site requests']],[0,1,2],'<strong>Always set</strong> HttpOnly, Secure and SameSite on session cookies.')],
+    notes:['<strong>Authentication ≠ authorization:</strong> identity first, permissions second.','<strong>A stolen session cookie</strong> can mean a stolen account.'],
+    promptQ:'Why does a site need cookies at all?', promptA:'<strong>HTTP is stateless,</strong> so cookies let the server recognise returning requests.' },
+
+  { group:'Part 3 · Auth & Security', shortTitle:'Security Principles', moduleTag:'Module 08 · Security Models', title:'Security Principles and Access Control',
+    lead:'Good security is built on a few simple ideas: give <strong>minimum access</strong>, add <strong>layers</strong>, <strong>deny by default</strong> and <strong>verify everything</strong>.',
+    cards:[C('Least privilege','Minimum access','A student can view their marks but cannot open the admin panel.'),C('Deny by default','Block unless allowed','A user cannot open <code>/admin</code> without explicit permission.'),C('Defense in depth','Many layers','If one layer fails, the others still protect.')],
+    consoleTitle:'Security principles lab',
+    presets:[P('1. Least privilege','Student · Teacher · Admin','3 roles',['Role','Can do','Cannot do'],[['Student','View own marks','Modify marks, open admin'],['Teacher','View and update assigned marks','Manage users'],['Admin','Manage users, system settings','(full access, so protect it most)']],[0],'<strong>Limit the damage</strong> if any one account is compromised.'),
+      F('2. Defense in depth','Firewall → WAF → Auth → Authz → Logs','5 layers',[['Firewall','Network','Blocks malicious traffic'],['WAF','Web filter','Filters web attacks'],['Authentication','Identity','Verifies who you are'],['Authorization','Permissions','Checks what you may do'],['Monitoring','Logging','Detects suspicious activity']],'<strong>No single control is perfect,</strong> so stack them.'),
+      F('3. Zero trust','Never trust, always verify','4 checks',[['Identity','Who are you?','MFA check'],['Device','Is it trusted?','Managed device'],['Location','Is it allowed?','Expected network'],['Action','Permission?','Role allows it']],'<strong>Even insiders</strong> are verified on every sensitive access.'),
+      P('4. Access control models','DAC · MAC · RBAC · ABAC','6 models',['Model','Who decides','Based on'],[['DAC','Resource owner','Owner’s choice'],['MAC','Central authority','Security labels'],['RBAC','Administrators','User roles'],['ABAC','Policy engine','User, resource, context attributes'],['Rule-based','System rules','Conditions such as time or IP'],['Or-BAC','Organisation','Roles, activities and views']],[2,3],'<strong>RBAC</strong> is the most common model in web apps.')],
+    notes:['<strong>Deny by default</strong> prevents accidental exposure.','<strong>Zero trust</strong> assumes no one is trusted automatically.'],
+    promptQ:'What does least privilege mean?', promptA:'<strong>Give every user only the minimum access needed</strong> to do their job.' },
+
+  { group:'Part 4 · OWASP Top 10:2025', shortTitle:'A01 – A03', moduleTag:'Module 09 · OWASP 2025', title:'OWASP Top 10:2025: A01 to A03 (Critical)',
+    lead:'The <strong>OWASP Top 10</strong> ranks the most critical web application risks. The first three are rated <strong>Critical</strong> in your notes.',
+    cards:[C('A01 · Critical','Broken Access Control','Users do things they should not. <em>Like a hotel key card that opens every room.</em>'),C('A02 · Critical','Security Misconfiguration','Unsafe setup such as default passwords. <em>Like a key under the doormat.</em>'),C('A03 · Critical','Software Supply Chain Failures','Tampered code or tools you depend on. <em>Like a contaminated flour bag.</em>')],
+    consoleTitle:'OWASP A01–A03 lab',
+    presets:[P('1. A01 Access Control',K('GET')+' /orders/1043','Critical',['Request','Result'],[['/orders/1042 (your order)','200 OK'],['/orders/1043 (someone else’s)','200 OK, should be 403']],[1],'<strong>Example:</strong> changing a number in the URL reveals another customer’s data. <strong>Fix:</strong> check permissions on the server for every request.','danger'),
+      P('2. A02 Misconfiguration','Default settings review','Critical',['Setting','Risky','Safe'],[['Admin password','admin / admin','Unique strong password'],['Cloud storage','Public by mistake','Private'],['Unused features','Left on','Turned off']],[0,1],'<strong>Fix:</strong> change defaults, disable unused features, review settings regularly.','danger'),
+      P('3. A03 Supply chain','Dependency audit','Critical',['Component','Source','Action'],[['Library','Trusted registry, updated','Keep updating'],['Update package','Unverified source','Do not install'],['Build tool','Tampered (SolarWinds, 2020)','Verify and monitor']],[1,2],'<strong>Fix:</strong> list your libraries, update them, download only from trusted sources.','danger')],
+    notes:['<strong>A01 is the top risk:</strong> always enforce permissions server-side.','<strong>SolarWinds 2020:</strong> a poisoned update reached thousands of organisations.'],
+    promptQ:'How do you prevent broken access control?', promptA:'<strong>Check permissions on the server for every request</strong> and give people only the access they need.' },
+
+  { group:'Part 4 · OWASP Top 10:2025', shortTitle:'A04 – A06', moduleTag:'Module 10 · OWASP 2025', title:'OWASP Top 10:2025: A04 to A06 (High)',
+    lead:'These three are rated <strong>High</strong>: weak scrambling of data, untrusted input and flaws in the plan itself.',
+    cards:[C('A04 · High','Cryptographic Failures','Private data not properly protected. <em>A secret on a postcard.</em>'),C('A05 · High','Injection','Harmful commands slipped into input. <em>A fake slip in the kitchen orders.</em>'),C('A06 · High','Insecure Design','The plan itself has a gap. <em>A vault with no back wall.</em>')],
+    consoleTitle:'OWASP A04–A06 lab',
+    presets:[P('1. A04 Crypto','Password storage','High',['Approach','Result'],[['Plain-text passwords','A leak reveals every password'],['Own invented scheme','Easy to break'],['Strong, well-tested hashing + HTTPS','Safe']],[0,1],'<strong>Fix:</strong> HTTPS everywhere, standard strong hashing, never invent your own.','warn'),
+      P('2. A05 Injection',K('SELECT')+' * '+K('FROM')+' users '+K('WHERE')+' username = '+S('?'),'High',['Defence','Why it works'],[['Treat input as untrusted','Never assume it is clean'],['Parameterized queries','Input stays data, never code'],['Validate what users send','Reject unexpected shapes']],[1],'<strong>Example:</strong> database commands typed into a login box. <strong>Fix:</strong> parameterized queries and validation.','warn'),
+      P('3. A06 Design','Password reset review','High',['Design','Verdict'],[['Easy-to-guess security questions','Insecure design'],['Reset link via verified email + MFA','Safer design']],[0],'<strong>Fix:</strong> think like an attacker while planning and list possible abuses before building.','warn')],
+    notes:['<strong>Parameterized queries</strong> separate SQL code from user data.','<strong>Insecure design</strong> cannot be fixed by perfect code alone.'],
+    promptQ:'Why do parameterized queries stop injection?', promptA:'<strong>They keep user input as pure data,</strong> so it is never run as a command.' },
+
+  { group:'Part 4 · OWASP Top 10:2025', shortTitle:'A07 – A09', moduleTag:'Module 11 · OWASP 2025', title:'OWASP Top 10:2025: A07 to A09',
+    lead:'Identity checks, trusting unverified code, and not noticing attacks. A07 and A08 are <strong>High</strong>; A09 is <strong>Moderate</strong>.',
+    cards:[C('A07 · High','Authentication Failures','The app fails to check who you are. <em>A bouncer who accepts “I’m on the list”.</em>'),C('A08 · High','Software/Data Integrity Failures','Trusting code or data without verification. <em>A broken medicine seal.</em>'),C('A09 · Moderate','Logging & Alerting Failures','Attacks go unnoticed. <em>Cameras nobody watches.</em>')],
+    consoleTitle:'OWASP A07–A09 lab',
+    presets:[P('1. A07 Authentication','Credential stuffing','High',['Weakness','Defence'],[['Reused leaked passwords','Block common passwords'],['Unlimited login attempts','Rate-limit repeated attempts'],['Password only','Require multi-factor login']],[0,1,2],'<strong>Example:</strong> leaked passwords tried on many sites until some open.','warn'),
+      P('2. A08 Integrity','Update installer','High',['Update source','Verdict'],[['Unverified source','Could be swapped for malware'],['Signed by trusted vendor','Verify the digital signature']],[0],'<strong>Fix:</strong> verify digital signatures; accept code and data only from trusted sources.','warn'),
+      P('3. A09 Logging','Breach timeline','Moderate',['Event','Logged?'],[['Failed logins','No → attack unnoticed for months'],['Failed logins','Yes + alert → caught early']],[0],'<strong>Fix:</strong> log logins and key actions, set alerts, and actually review them.','warn')],
+    notes:['<strong>MFA</strong> blunts stolen-password attacks.','<strong>Logs only help</strong> if someone reviews the alerts.'],
+    promptQ:'What is credential stuffing?', promptA:'<strong>Trying leaked username and password pairs</strong> across many sites until some work.' },
+
+  { group:'Part 4 · OWASP Top 10:2025', shortTitle:'A10 & Full List', moduleTag:'Module 12 · OWASP 2025', title:'A10 and the Complete OWASP Top 10:2025',
+    lead:'The last item is <strong>A10, Mishandling of Exceptional Conditions</strong> (Moderate). Then review the full ranked list.',
+    cards:[C('A10 · Moderate','Mishandling of Exceptional Conditions','Bad reaction to errors. <em>A door that unlocks when the power fails.</em>'),C('Severity key','Red · Orange · Yellow','Critical A01–A03, High A04–A08, Moderate A09–A10.'),C('Next step','Practise safely','Only test in labs or systems you are authorised to test.')],
+    consoleTitle:'OWASP 2025 master list',
+    presets:[P('1. A10 Exceptions','Error handling','Moderate',['Behaviour','Verdict'],[['Error page shows server internals','Helps an attacker plan'],['Failure opens the door (fail open)','Dangerous'],['Friendly message + fail closed','Safe']],[0,1],'<strong>Fix:</strong> plan for errors, show friendly messages, default failures to “deny access”.','warn'),
+      P('2. Full list','A01 → A10','10 risks',['ID','Risk','Severity'],[['A01','Broken Access Control','Critical'],['A02','Security Misconfiguration','Critical'],['A03','Software Supply Chain Failures','Critical'],['A04','Cryptographic Failures','High'],['A05','Injection','High'],['A06','Insecure Design','High'],['A07','Authentication Failures','High'],['A08','Software/Data Integrity Failures','High'],['A09','Security Logging & Alerting Failures','Moderate'],['A10','Mishandling of Exceptional Conditions','Moderate']],[0,1,2],'<strong>Course complete:</strong> you now know the web, HTTP, authentication, security principles and the OWASP Top 10:2025.')],
+    notes:['<strong>Fail closed:</strong> when something breaks, deny access.','<strong>Ethics:</strong> test only what you own or have written permission to test.'],
+    promptQ:'What should happen when an app hits an unexpected error?', promptA:'<strong>Show a friendly message and fail closed,</strong> never leak internals or open access.' }
+  ]
+};
+
+/* ===== VISUAL SPECS ===== */
+const N=(id,x,y,i,t,s,o)=>Object.assign({id,x,y,i,t,s},o||{}),E=(a,b,l,o)=>({a,b,l,o}),St=(t,e,n,bad)=>({t,e:e||[],n:n||[],bad:bad||[]});
+const D=(tab,nodes,edges,steps,h)=>({type:'diagram',tab,nodes,edges,steps,h});
+const A=(tab,parts)=>({type:'anatomy',tab,parts});
+const L=COURSE.lessons;
+L[0].visuals=[D('Web in daily life',[N('p',10,10,'📱','Phone'),N('l',10,106,'💻','Laptop'),N('t',10,202,'🖥️','Desktop'),N('w',334,106,'🌐','The Web','servers + pages'),N('s',658,10,'🛒','Shopping'),N('b',658,106,'🏦','Banking'),N('e',658,202,'🎓','Learning')],[E('p','w'),E('l','w'),E('t','w'),E('w','s'),E('w','b'),E('w','e')],[St('<b>What:</b> any device with a browser can reach the web.',[0,1,2],['p','l','t']),St('<b>Why:</b> shopping, banking, learning and chat all live on web servers.',[3,4,5],['w','s','b','e']),St('<b>Advantages:</b> global reach, instant updates for everyone, no installation. <b>Catch:</b> public means attackable.',[0,1,2,3,4,5],['w'])])];
+L[1].visuals=[D('How the web works',[N('b',10,106,'💻','Browser','client'),N('d',230,10,'📒','DNS server'),N('n',230,202,'🌐','Internet'),N('s',460,106,'🖥️','Web server','amazon.in'),N('db',658,106,'🗄️','Database')],[E('b','d','amazon.in?',-8),E('d','b','13.227.170.27',8),E('b','n','connect',-8),E('n','s','GET / HTTP/1.1',-8),E('s','db','query',-8),E('db','s','data',8),E('s','n','200 OK + HTML',8),E('n','b','page',8)],[St('You type <b>amazon.in</b> into the browser (the client).',[],['b']),St('<b>DNS query:</b> “what is the IP address of amazon.in?”',[0],['b','d']),St('<b>DNS reply:</b> <code>13.227.170.27</code>, like looking up a contacts list.',[1],['d','b']),St('<b>Connect:</b> the browser opens a TCP connection to that IP (port 443 for HTTPS).',[2],['b','n']),St('<b>Request:</b> <code>GET / HTTP/1.1</code> with <code>Host: amazon.in</code> reaches the web server.',[3],['n','s']),St('<b>Process:</b> the server runs its code and asks the database for data.',[4,5],['s','db']),St('<b>Response:</b> <code>HTTP/1.1 200 OK</code> plus HTML, sent as small packets.',[6],['s','n']),St('The packets cross the internet and reach your browser.',[7],['n','b']),St('<b>Render:</b> the browser draws the page. All in well under a second.',[],['b'])]),
+ D('Request & response',[N('c',20,106,'💻','Client','browser or app'),N('s',648,106,'🖥️','Server'),N('rq',290,16,'📨','Request','GET /products HTTP/1.1',{w:220}),N('rs',290,196,'📦','Response','200 OK + JSON body',{w:220})],[E('c','s','',-14),E('s','c','',14)],[St('The client sends a <b>request</b>: a method, a path and headers, e.g. <code>GET /products HTTP/1.1</code>.',[0],['c','rq','s']),St('The server <b>processes</b> it: finds the products and builds an answer.',[],['s']),St('The server returns a <b>response</b>: status <code>200 OK</code> plus a body.',[1],['s','rs','c'])])];
+L[2].visuals=[A('URL anatomy',[{c:'red',code:'https://',l:'Scheme',n:'Protocol to use'},{c:'blue',code:'shop.example.com',l:'Host (domain)',n:'Name of the server, resolved by DNS'},{c:'yellow',code:':443',l:'Port',n:'The door on the server'},{c:'green',code:'/products/shoes',l:'Path',n:'Which resource you want'},{c:'purple',code:'?color=red&size=9',l:'Query string',n:'Extra parameters'}]),
+ D('DNS lookup',[N('c',10,106,'💻','Client'),N('r',230,106,'🧭','DNS resolver'),N('ro',470,10,'🌍','Root server'),N('t',470,106,'🏷️','TLD server','.com'),N('a',470,202,'📇','Authoritative','example.com')],[E('c','r','example.com?',-10),E('r','ro','',-6),E('ro','r','.com → TLD',6),E('r','t','',-6),E('t','r','ask example.com’s server',6),E('r','a','',-6),E('a','r','1.2.3.4',6),E('r','c','1.2.3.4',10)],[St('The client asks its resolver: <b>example.com?</b>',[0],['c','r']),St('The resolver asks a <b>root server</b>.',[1],['r','ro']),St('The root replies: “ask the <b>.com</b> TLD servers”.',[2],['ro','r']),St('The resolver asks the <b>TLD server</b>.',[3],['r','t']),St('The TLD replies with the <b>authoritative</b> server for example.com.',[4],['t','r']),St('The resolver asks the <b>authoritative server</b>.',[5],['r','a']),St('It returns the real answer: <code>1.2.3.4</code>.',[6],['a','r']),St('The resolver hands the IP to the client and <b>caches</b> it.',[7],['r','c'])])];
+L[3].visuals=[D('3-tier architecture',[N('u',10,106,'👤','User'),N('f',200,106,'🎨','Front end','HTML · CSS · JS'),N('b',410,106,'⚙️','Back end','server logic'),N('d',640,106,'🗄️','Database','users · orders')],[E('u','f','uses site',-10),E('f','b','HTTP request',-10),E('b','d','query',-10),E('d','b','data',10),E('b','f','HTTP response',10),E('f','u','sees result',10)],[St('The user works with the <b>front end</b> in the browser: HTML structure, CSS style, JavaScript behaviour.',[0],['u','f']),St('JavaScript sends an <b>HTTP request</b> to the back end.',[1],['f','b']),St('The back end runs logic, checks permissions and <b>queries the database</b>.',[2],['b','d']),St('The database returns the data.',[3],['d','b']),St('The back end builds the <b>HTTP response</b>.',[4],['b','f']),St('The front end shows the result to the user.',[5],['f','u'])]),
+ D('Scaled architecture',[N('u',10,106,'👥','Users'),N('cd',170,106,'🚀','CDN','static files'),N('lb',330,106,'⚖️','Load balancer'),N('a1',490,20,'⚙️','App server 1'),N('a2',490,192,'⚙️','App server 2'),N('ca',658,20,'⚡','Cache'),N('db',658,192,'🗄️','Database')],[E('u','cd'),E('cd','lb'),E('lb','a1'),E('lb','a2'),E('a1','ca'),E('a2','db')],[St('Users from anywhere hit the site.',[0],['u','cd']),St('A <b>CDN</b> serves images, CSS and JS from a nearby location.',[1],['cd','lb']),St('A <b>load balancer</b> spreads traffic over several app servers.',[2,3],['lb','a1','a2']),St('App servers use a <b>cache</b> for fast reads and the <b>database</b> as the source of truth.',[4,5],['ca','db']),St('More servers mean more capacity, but also <b>more places to secure</b>.',[],['cd','lb','a1','a2','ca','db'])])];
+L[4].visuals=[A('Request anatomy',[{c:'red',code:'POST /login HTTP/1.1',l:'Request line',n:'Method, path (resource) and HTTP version'},{c:'blue',code:'Host: example.com\nContent-Type: application/json\nUser-Agent: Mozilla/5.0\nAccept: application/json\nConnection: keep-alive',l:'Headers',n:'Extra information: host, content type, user agent'},{c:'green',code:'{\n  "username": "sonu"\n}',l:'Body (optional)',n:'Data sent to the server (POST, PUT, PATCH)'}]),
+ D('Methods in action',[N('c',20,90,'💻','Client',null,{h:110}),N('a',330,90,'🖥️','API server',null,{h:110}),N('r',640,106,'📦','Resource','/users/10')],[E('c','a','GET /users/10',-33),E('c','a','POST /users',-11),E('c','a','PUT /users/10',11),E('c','a','DELETE /users/10',33),E('a','r')],[St('<b>GET</b> reads the resource. Nothing changes.',[0,4],['a','r']),St('<b>POST</b> creates a new resource or submits data.',[1,4],['a','r']),St('<b>PUT</b> replaces the whole resource (<b>PATCH</b> changes only part of it).',[2,4],['a','r']),St('<b>DELETE</b> removes the resource.',[3,4],['a','r'],['r'])])];
+L[5].visuals=[A('Response anatomy',[{c:'red',code:'HTTP/1.1 200 OK',l:'Status line',n:'HTTP version, status code, reason phrase'},{c:'blue',code:'Content-Type: application/json\nContent-Length: 54\nServer: nginx\nSet-Cookie: session=abc123; Path=/; HttpOnly',l:'Headers',n:'Type, size, cookies, server info'},{c:'yellow',code:'(blank line)',l:'Blank line',n:'Separates headers from body'},{c:'green',code:'{\n  "message": "Login successful"\n}',l:'Body',n:'Response data: JSON, HTML, text…'}]),
+ D('Status code tree',[N('c',10,106,'💻','Client'),N('s',200,106,'🖥️','Server'),N('o1',560,8,'✅','200 OK',null,{w:200,h:50}),N('o2',560,66,'↪️','301 Moved',null,{w:200,h:50}),N('o3',560,124,'⛔','403 Forbidden',null,{w:200,h:50}),N('o4',560,182,'🔍','404 Not Found',null,{w:200,h:50}),N('o5',560,240,'💥','500 Server Error',null,{w:200,h:50})],[E('c','s','request'),E('s','o1','worked'),E('s','o2','new URL'),E('s','o3','not allowed'),E('s','o4','missing'),E('s','o5','server broke')],[St('The client sends a request and the server decides the outcome.',[0],['c','s']),St('<b>2xx</b>: success. The request worked.',[1],['o1']),St('<b>3xx</b>: redirection. Go to another URL.',[2],['o2']),St('<b>4xx</b>: client error. <b>403</b> means you are not allowed.',[3],[],['o3']),St('<b>4xx</b>: <b>404</b> means the resource does not exist.',[4],[],['o4']),St('<b>5xx</b>: the server failed on a valid request.',[5],[],['o5'])],300)];
+L[6].visuals=[D('Login & session flow',[N('b',10,90,'💻','Browser',null,{h:110}),N('s',330,90,'🖥️','Web server',null,{h:110}),N('d',640,106,'🗄️','Session store','users + sessions')],[E('b','s','POST /login',-30),E('s','d','check user',-10),E('d','s','valid ✔',10),E('s','b','Set-Cookie: session=abc123',-8),E('b','s','Cookie: session=abc123',14),E('s','b','200 OK dashboard',36)],[St('The user submits the login form: <code>POST /login</code> (always over HTTPS).',[0],['b','s']),St('The server checks the credentials in the database (the password is compared with a <b>hash</b>).',[1,2],['s','d']),St('On success it creates a <b>session</b> and replies <code>Set-Cookie: session=abc123; HttpOnly</code>.',[3],['s','b']),St('The browser stores the cookie and sends it with <b>every later request</b>.',[4],['b','s']),St('The server finds the session and knows <b>who you are</b>, so it serves the dashboard.',[5],['s','b']),St('Anyone who steals the cookie can act as you, so use <b>HttpOnly, Secure and SameSite</b>.',[],[],['b'])])];
+L[7].title='Web Application Security Models'; L[7].shortTitle='Security Models'; L[7].lead='Security models are the design rules behind every safe web app: protect <strong>confidentiality, integrity and availability</strong>, give <strong>minimum access</strong>, add <strong>layers</strong>, and let the <strong>browser</strong> enforce its own isolation rules.';
+L[7].presets.push(P('5. CIA triad','Confidentiality · Integrity · Availability','3 goals',['Goal','Meaning','Threat'],[['Confidentiality','Only authorised people can read data','Data leak'],['Integrity','Data cannot be changed secretly','Tampered update'],['Availability','Service works when needed','DDoS attack']],[0,1,2],'<strong>Every security control</strong> protects at least one of these three goals.'),P('6. Browser models','Same-origin · CORS · CSP','3 models',['Model','What it does'],[['Same-Origin Policy','A page can read data only from its own origin (scheme + host + port)'],['CORS','A server may allow chosen other origins to read its responses'],['CSP','A header listing which scripts and resources a page may load']],[0],'<strong>The browser</strong> is a security boundary too, not only the server.'));
+L[7].visuals=[D('Defense in depth',[N('a',8,106,'🧑‍💻','Request',null,{w:100}),N('fw',141,106,'🧱','Firewall',null,{w:100}),N('wf',274,106,'🛡️','WAF',null,{w:100}),N('au',407,106,'🔑','Auth',null,{w:100}),N('az',540,106,'🚦','Authz',null,{w:100}),N('ap',673,106,'🗄️','App + data',null,{w:100})],[E('a','fw'),E('fw','wf'),E('wf','au'),E('au','az'),E('az','ap')],[St('A normal request passes <b>every layer</b> and reaches the app.',[0,1,2,3,4],['a','fw','wf','au','az','ap']),St('A network attack is blocked at the <b>firewall</b>.',[0],['a'],['fw']),St('A malicious web request is filtered by the <b>WAF</b>.',[0,1],['a','fw'],['wf']),St('Not logged in? Blocked at <b>authentication</b> (401).',[0,1,2],['a','fw','wf'],['au']),St('Logged in but not permitted? Blocked at <b>authorization</b> (403).',[0,1,2,3],['a','fw','wf','au'],['az']),St('If one layer fails, the others still protect. <b>Logs</b> record everything.',[],['a'])])];
+L[8].visuals=[D('A01 in action',[N('u',10,90,'👤','Alice','user id 1042',{h:110}),N('s',330,90,'🖥️','Server',null,{h:110})],[E('u','s','GET /orders/1042',-30),E('s','u','200 OK ✔',-10),E('u','s','GET /orders/1043',10),E('s','u','200 OK ✘ should be 403',30)],[St('Alice requests <b>her own</b> order 1042.',[0],['u','s']),St('The server returns it. Correct ✔',[1],['s','u']),St('Alice changes the number in the URL to <b>1043</b>, someone else’s order.',[2],['u','s']),St('No ownership check, so private data leaks. This is <b>A01 Broken Access Control</b>.',[3],['u'],['s']),St('<b>Fix:</b> the server checks <b>every request</b> against the logged-in user and replies <code>403 Forbidden</code>.',[],['s'])])];
+/* ===== NEW LESSONS ===== */
+L.splice(8,0,{group:'Part 4 · OWASP Top 10:2025',shortTitle:'OWASP Big Picture',moduleTag:'Module 00 · OWASP 2025',title:'OWASP Top 10:2025: The Big Picture',lead:'<strong>OWASP</strong> (Open Worldwide Application Security Project) publishes a ranked list of the most critical web risks. Before the details, see <strong>where in the architecture</strong> each risk lives.',cards:[C('What','A ranked awareness list','Ten categories of risk, not a complete checklist.'),C('Where','Across the whole stack','Browser input, app logic, database, libraries and logs.'),C('Severity','Critical · High · Moderate','A01–A03 Critical, A04–A08 High, A09–A10 Moderate.')],consoleTitle:'OWASP 2025 severity map',presets:[P('1. By severity','Critical · High · Moderate','10 risks',['Severity','Risks'],[['Critical','A01 Access Control · A02 Misconfiguration · A03 Supply Chain'],['High','A04 Cryptographic · A05 Injection · A06 Insecure Design · A07 Authentication · A08 Integrity'],['Moderate','A09 Logging & Alerting · A10 Exceptional Conditions']],[0],'<strong>Start with Critical:</strong> access control, configuration and supply chain.')],notes:['<strong>Use it as a map,</strong> then study each risk in depth.','<strong>Risks overlap:</strong> one weakness can cause several categories.'],promptQ:'Which three categories are rated Critical in 2025?',promptA:'<strong>A01 Broken Access Control, A02 Security Misconfiguration and A03 Software Supply Chain Failures.</strong>',visuals:[D('Risk map',[N('b',10,106,'🌐','Browser','user input'),N('a',300,106,'⚙️','Web app','logic + config'),N('d',590,106,'🗄️','Database'),N('l',300,10,'📦','Libraries'),N('g',300,202,'📜','Logs & alerts')],[E('b','a','requests'),E('a','d','queries'),E('l','a','code'),E('a','g','events')],[St('<b>Requests arrive:</b> A01 access control, A07 authentication, A05 injection, A04 data in transit.',[0],['b','a']),St('<b>Inside the app:</b> A06 insecure design, A02 misconfiguration, A10 mishandled errors.',[],['a']),St('<b>Database:</b> A04 data at rest, A05 injection reaching the database.',[1],['a','d']),St('<b>Dependencies:</b> A03 supply chain, A08 integrity of updates and data.',[2],['l','a']),St('<b>Monitoring:</b> A09 logging and alerting failures.',[3],['a','g'])])]});
+L.splice(4,0,{group:'Part 2 · HTTP',shortTitle:'HTTP & HTTPS',moduleTag:'Module 00 · HTTP',title:'HTTP and HTTPS: The Language of the Web',lead:'<strong>HTTP</strong> is the set of rules browsers and servers use to talk. It is <strong>stateless</strong> and sends readable text, so <strong>HTTPS</strong> wraps it in <strong>TLS</strong> encryption.',cards:[C('HTTP','Request and response','Text messages in a fixed format; each request stands alone.'),C('HTTPS','HTTP + TLS','Adds encryption, integrity and server identity checks.'),C('Ports','80 and 443','HTTP uses port 80, HTTPS uses port 443.')],consoleTitle:'HTTP vs HTTPS lab',presets:[P('1. HTTP vs HTTPS','http:// vs https://','2 protocols',['Feature','HTTP','HTTPS'],[['Port','80','443'],['Encrypted','No, readable on the path','Yes, TLS'],['Server identity','Not verified','Checked by certificate'],['Use today','Avoid','Always']],[1,2,3],'<strong>Rule:</strong> use HTTPS everywhere.'),P('2. HTTP versions','HTTP/1.1 · 2 · 3','3 versions',['Version','Key idea'],[['HTTP/1.1','Text format, one request at a time per connection'],['HTTP/2','Binary, many requests over one connection'],['HTTP/3','Runs over QUIC (UDP), faster on poor networks']],[0],'<strong>The format</strong> of requests and responses stays the same across versions.')],notes:['<strong>Stateless:</strong> the server forgets you after each request, so cookies exist.','<strong>TLS handshake</strong> happens before any HTTP data is sent.'],promptQ:'What does HTTPS add to HTTP?',promptA:'<strong>TLS: encryption, integrity and server authentication.</strong>',visuals:[D('TLS handshake',[N('c',30,40,'💻','Client',null,{w:140,h:200}),N('s',630,40,'🖥️','Server',null,{w:140,h:200})],[E('c','s','SYN',-87),E('s','c','SYN-ACK',-62),E('c','s','ACK',-37),E('c','s','ClientHello',-12),E('s','c','ServerHello + certificate',13),E('c','s','Key exchange · Finished',38),E('s','c','Finished',63),E('c','s','🔒 Encrypted HTTP',88)],[St('TCP <b>SYN</b>: the client asks to open a connection on port 443.',[0],['c','s']),St('<b>SYN-ACK</b>: the server agrees.',[1],['c','s']),St('<b>ACK</b>: the TCP connection is open (three-way handshake).',[2],['c','s']),St('<b>ClientHello</b>: supported TLS versions and ciphers.',[3],['c','s']),St('<b>ServerHello + certificate</b>: the server proves its identity.',[4],['c','s']),St('The client verifies the certificate and both sides agree on <b>session keys</b>.',[5],['c','s']),St('<b>Finished</b>: the handshake is confirmed.',[6],['c','s']),St('<b>🔒 Encrypted HTTP:</b> eavesdroppers now see only scrambled data.',[7],['c','s'])])]});
+/* ===== NETWORK-MAP VISUALS (Protocol Explorer style) ===== */
+const Nv=(tab,devices,links,packets)=>({type:'net',tab,devices,links,packets});
+const Dv=(id,x,y,k,t,s)=>({id,x,y,k,t,s});
+L[1].visuals=[Nv('Web request journey',[Dv('l',60,150,'laptop','Your laptop'),Dv('r',190,150,'router','Home router'),Dv('i',320,150,'cloud','ISP'),Dv('n',450,150,'cloud','Internet'),Dv('d',450,45,'server','DNS server'),Dv('s',600,150,'server','Web server','amazon.in'),Dv('b',740,150,'db','Database')],[['l','r'],['r','i'],['i','n'],['n','d'],['n','s'],['s','b']],[['l','d','amazon.in?','DNS','The browser asks DNS for the IP address of amazon.in.'],['d','l','13.227.170.27','DNS','DNS answers with the IP address, like a contacts list.'],['l','s','SYN','TCP','The browser opens a TCP connection to the server (port 443).'],['s','l','SYN-ACK','TCP','The server agrees to connect.'],['l','s','GET / HTTP/1.1','HTTP','The browser asks for the home page.'],['s','b','product data?','APP','The server asks the database for the data.'],['b','s','rows','APP','The database returns the data.'],['s','l','200 OK + HTML','HTTP','The server sends the page back and the browser draws it.']])];
+L[2].visuals=[L[2].visuals[0],Nv('DNS lookup',[Dv('c',60,150,'laptop','Client'),Dv('r',250,150,'server','DNS resolver'),Dv('ro',540,40,'server','Root server'),Dv('t',620,150,'server','TLD server','.com'),Dv('a',540,260,'server','Authoritative','example.com')],[['c','r'],['r','ro'],['r','t'],['r','a']],[['c','r','example.com?','DNS','The client asks its resolver for the IP of example.com.'],['r','ro','example.com?','DNS','The resolver asks a root server.'],['ro','r','ask .com TLD','DNS','The root points to the .com TLD servers.'],['r','t','example.com?','DNS','The resolver asks the TLD server.'],['t','r','ask authoritative','DNS','The TLD points to the authoritative server.'],['r','a','example.com?','DNS','The resolver asks the authoritative server.'],['a','r','1.2.3.4','DNS','The authoritative server returns the real IP.'],['r','c','1.2.3.4','DNS','The resolver answers the client and caches the result.']])];
+L[3].visuals=[Nv('3-tier architecture',[Dv('f',80,150,'laptop','Front end','browser'),Dv('b',400,150,'server','Back end','server logic'),Dv('d',700,150,'db','Database')],[['f','b'],['b','d']],[['f','b','POST /login','HTTP','The front end sends a request to the back end.'],['b','d','find user','APP','The back end asks the database for the user.'],['d','b','user row','APP','The database returns the data.'],['b','f','200 OK','HTTP','The back end replies and the front end shows the result.']]),
+ Nv('Scaled architecture',[Dv('u',50,150,'laptop','Users'),Dv('c',190,150,'cloud','CDN','static files'),Dv('lb',330,150,'router','Load balancer'),Dv('a1',500,60,'server','App server 1'),Dv('a2',500,250,'server','App server 2'),Dv('ca',700,60,'db','Cache'),Dv('db',700,250,'db','Database')],[['u','c'],['c','lb'],['lb','a1'],['lb','a2'],['a1','ca'],['a2','db']],[['u','c','GET /logo.png','HTTP','Static files come straight from the nearby CDN.'],['c','u','logo.png','HTTP','The CDN answers without bothering the servers.'],['u','lb','GET /cart','HTTP','Dynamic requests go through to the load balancer.'],['lb','a1','forward','APP','The load balancer picks a free app server.'],['a1','ca','cart?','APP','The app server checks the fast cache first.'],['ca','a1','found','APP','The cache has it, so the database is not needed.'],['a1','u','200 OK','HTTP','The page goes back to the user.']])];
+L[4].visuals=[Nv('TLS handshake',[Dv('c',70,150,'laptop','Client'),Dv('r',250,150,'router','Router'),Dv('n',450,150,'cloud','Internet'),Dv('s',710,150,'server','Server')],[['c','r'],['r','n'],['n','s']],[['c','s','SYN','TCP','The client asks to open a connection on port 443.'],['s','c','SYN-ACK','TCP','The server agrees.'],['c','s','ACK','TCP','The TCP connection is open.'],['c','s','ClientHello','TLS','The client lists the TLS versions and ciphers it supports.'],['s','c','ServerHello + certificate','TLS','The server proves its identity with a certificate.'],['c','s','Key exchange','TLS','Both sides agree on secret session keys.'],['s','c','Finished','TLS','The handshake is confirmed.'],['c','s','🔒 GET / (encrypted)','TLS','HTTP now travels encrypted, so eavesdroppers see scrambled data.']])];
+L[5].visuals=[L[5].visuals[0],Nv('Methods journey',[Dv('c',80,150,'laptop','Client'),Dv('a',400,150,'server','API server'),Dv('d',700,150,'db','Database')],[['c','a'],['a','d']],[['c','a','GET /users/10','HTTP','GET reads a resource. Nothing changes.'],['a','d','read user 10','APP','The server reads from the database.'],['c','a','POST /users','HTTP','POST creates a new resource.'],['a','d','create user','APP','A new record is stored.'],['c','a','PUT /users/10','HTTP','PUT replaces the whole resource (PATCH changes part of it).'],['a','d','replace user 10','APP','The record is overwritten.'],['c','a','DELETE /users/10','HTTP','DELETE removes the resource.'],['a','d','remove user 10','APP','The record is deleted.']])];
+L[6].visuals=[L[6].visuals[0],Nv('Status codes journey',[Dv('c',100,150,'laptop','Client'),Dv('s',450,150,'server','Web server')],[['c','s']],[['c','s','GET /home','HTTP','The client asks for a page.'],['s','c','200 OK','HTTP','2xx: success, the page is returned.'],['c','s','GET /old-page','HTTP','The client asks for an old URL.'],['s','c','301 Moved','REDIR','3xx: go to the new URL instead.'],['c','s','GET /admin','HTTP','The client asks for a restricted page.'],['s','c','403 Forbidden','ERR','4xx: you are not allowed to see this.'],['c','s','GET /nope','HTTP','The client asks for a missing page.'],['s','c','404 Not Found','ERR','4xx: that page does not exist.'],['c','s','GET /report','HTTP','A valid request that hits a server bug.'],['s','c','500 Server Error','ERR','5xx: the server failed on a valid request.']])];
+/* ===== OWASP: intro + one lesson per risk ===== */
+const BP=L[9];BP.shortTitle='What is OWASP?';BP.title='What Is OWASP and Why Do We Need It?';
+BP.lead='<strong>OWASP</strong> (Open Worldwide Application Security Project) is a free, non-profit community that publishes security guides, tools and the famous <strong>Top 10</strong> list of web risks. <em>Think of a restaurant health inspector’s checklist: it does not cover every possible problem, but it catches the ones that hurt most people.</em>';
+BP.cards=[C('What it is','An open community','Volunteers worldwide share free standards, tools and the Top 10 list.'),C('Why we need it','A shared priority list','Developers, testers and managers all agree on which risks to fix first.'),C('How to use it','Learn, then check','Study each risk, then test and review your apps against the list.')];
+BP.presets.unshift(P('1. Why OWASP?','Without vs with the Top 10','4 points',['Without OWASP','With OWASP'],[['Everyone guesses what to fix','A shared, ranked list of risks'],['Security is learned after a breach','Risks are learned before building'],['Teams use different words','One common vocabulary'],['Audits are unclear','Clear targets for testing']],[1],'<strong>Result:</strong> fewer breaches and faster, clearer fixes.'));
+BP.presets[1].label='2. By priority';
+const SRC=[[L[10],0],[L[10],1],[L[10],2],[L[11],0],[L[11],1],[L[11],2],[L[12],0],[L[12],1],[L[12],2],[L[13],0]];
+const RK=[
+['Access Control','A visitor edits /orders/1042 to /orders/1043 and sees a stranger’s order.','Strangers can read or change other people’s data, even become admin.','Check permissions on the server for every request and give people only the access they need.','What is the first rule of access control?','Check permissions on the server for every request.',[Dv('a',70,150,'user','Alice'),Dv('s',400,150,'server','App server'),Dv('d',700,150,'db','Orders DB')],[['a','s'],['s','d']],[['a','s','GET /orders/1042','HTTP','Alice asks for her own order.'],['s','a','200 OK','HTTP','Allowed: it is her order.'],['a','s','GET /orders/1043','HTTP','Alice changes the number in the URL to someone else’s order.'],['s','a','200 OK ✘','RISK','No ownership check, so private data leaks. This is A01.'],['a','s','GET /orders/1043','HTTP','Fix: the same request again, with a permission check.'],['s','a','403 Forbidden','HTTP','The server checks every request against the logged-in user and refuses.']]],
+['Misconfiguration','A new router still using admin/admin, or cloud storage left public.','Attackers find open doors without any hacking skill.','Change default settings and passwords, turn off unused features and review settings regularly.','Name two misconfiguration examples.','Default passwords and publicly exposed storage or unused features.',[Dv('v',70,150,'user','Visitor'),Dv('s',400,150,'server','Web server','defaults left on'),Dv('b',700,150,'box','Storage')],[['v','s'],['s','b']],[['v','s','GET /admin','HTTP','Anyone can try the admin page.'],['s','v','admin / admin works','RISK','A default password was never changed.'],['v','b','list files','HTTP','The visitor looks at the storage.'],['b','v','all backups visible','RISK','Storage was left public by mistake.'],['v','s','GET /admin','HTTP','Fix: defaults changed, unused features off, storage private.'],['s','v','403 Forbidden','HTTP','Access is refused.']]],
+['Supply Chain','A flour bag poisoned at the supplier: every bakery using it is affected (SolarWinds, 2020).','One poisoned library or update reaches thousands of organisations.','List the libraries you use, update them and only download from trusted sources.','Why are third-party libraries a risk?','You inherit their bugs and any tampering in the supply chain.',[Dv('d',70,150,'laptop','Developer'),Dv('r',290,150,'cloud','Package registry'),Dv('b',510,150,'server','Build server'),Dv('u',730,150,'user','Customers')],[['d','r'],['d','b'],['b','u']],[['d','r','request library','HTTP','Your app depends on outside code.'],['r','d','library v2.2 (poisoned)','RISK','A trusted-looking update hides malicious code.'],['d','b','push build','HTTP','The bad code is built into your product.'],['b','u','ship update','RISK','Every customer now runs the poisoned code.'],['d','r','verify signature','HTTP','Fix: list dependencies, verify signatures, trusted sources only.'],['r','d','signature mismatch: rejected','HTTP','The tampered package never gets installed.']]],
+['Cryptographic','Sending a secret on a postcard: anyone handling it can read it.','Passwords, cards and personal data leak or can be read in transit.','Use HTTPS everywhere and store passwords with strong, well-tested hashing, never your own scheme.','How should passwords be stored?','With strong, well-tested hashing, never in plain text.',[Dv('l',70,150,'laptop','Café laptop'),Dv('r',260,150,'router','Café Wi-Fi'),Dv('n',470,150,'cloud','Internet'),Dv('s',710,150,'server','Server'),Dv('e',260,45,'attacker','Eavesdropper')],[['l','r'],['r','n'],['n','s'],['r','e']],[['l','s','password (plain HTTP)','RISK','Without HTTPS the password travels as readable text.'],['r','e','copy of traffic','RISK','Anyone on the same network can read it.'],['l','s','ClientHello','TLS','Fix: use HTTPS (TLS).'],['s','l','certificate','TLS','The server proves its identity.'],['l','s','🔒 scrambled data','TLS','Traffic is now encrypted.'],['r','e','unreadable bytes','TLS','The eavesdropper sees only scrambled data.']]],
+['Injection','A fake order slip slipped into the kitchen: the cook obeys it because it looks real.','Attackers can read, change or delete data, or take over the server.','Treat all input as untrusted; use parameterized queries and validate what users send.','What stops injection?','Parameterized queries plus input validation.',[Dv('u',70,150,'attacker','User input'),Dv('a',380,150,'server','App'),Dv('d',700,150,'db','Database')],[['u','a'],['a','d']],[['u','a','input with hidden command','RISK','An attacker types a command instead of normal data.'],['a','d','query = code + input glued','RISK','Unsafe: the app glues input into the query, so the database cannot tell data from command.'],['d','a','all rows leaked','RISK','The database obeys the hidden command.'],['u','a','same input','HTTP','Fix: parameterized queries.'],['a','d','query shape + data slot','HTTP','The query is fixed first; the input is bound as plain data.'],['d','a','0 rows','HTTP','The input is searched as ordinary text and finds nothing.']]],
+['Insecure Design','A vault with a perfect door but no back wall: the flaw is in the blueprint.','Even flawless code cannot fix a plan that allows abuse.','Think like an attacker while planning and list possible abuses before building.','Why can’t good code fix insecure design?','Because the flaw is in the plan, so the code faithfully builds the flaw.',[Dv('u',70,150,'user','User'),Dv('a',380,150,'server','Reset page'),Dv('m',700,150,'doc','Email inbox')],[['u','a'],['a','m']],[['u','a','reset password for bob','HTTP','Someone asks to reset an account.'],['a','u','pet’s name?','RISK','The design relies on easy-to-guess answers.'],['u','a','answer guessed','RISK','An attacker finds it on social media.'],['a','u','password reset','RISK','Account taken over. No code bug: the plan itself was weak.'],['a','m','one-time reset link','HTTP','Safer design: a one-time link to the verified email.'],['m','u','click link + MFA','HTTP','Only the real owner can finish the reset.']]],
+['Authentication','A bouncer who lets in anyone who says “I’m on the list”.','Accounts are taken over through weak, reused or guessed passwords.','Require multi-factor login, block common passwords and limit repeated login attempts.','Name two defences against credential attacks.','Multi-factor login and rate-limiting login attempts.',[Dv('a',70,150,'attacker','Attacker'),Dv('s',400,150,'server','Login page'),Dv('d',700,150,'db','User DB')],[['a','s'],['s','d']],[['a','s','try alice / password1','RISK','An attacker guesses a common password.'],['s','a','wrong','HTTP','Rejected, but nothing stops more tries.'],['a','s','try alice / 123456','RISK','No limit on attempts, so guessing continues.'],['s','a','welcome, alice!','RISK','A weak or leaked password finally works.'],['a','s','try again ×50','BLOCK','Fix: rate-limit repeated attempts.'],['s','a','429 Too Many Requests','HTTP','Attempts are blocked, and MFA stops stolen passwords.']]],
+['Integrity','A medicine bottle with a broken seal: you cannot trust what is inside.','Tampered updates or data run with full trust.','Verify digital signatures on updates and only accept code and data from trusted sources.','How do you check an update is genuine?','Verify its digital signature.',[Dv('v',70,150,'server','Vendor'),Dv('c',300,150,'cloud','Download site'),Dv('l',560,150,'laptop','Your computer'),Dv('e',300,45,'attacker','Attacker')],[['v','c'],['c','l'],['c','e']],[['v','c','publish update (signed)','HTTP','The vendor uploads a genuine update.'],['e','c','swap with malicious file','RISK','An attacker replaces the update.'],['c','l','download update','RISK','Without verification the computer installs it blindly.'],['l','c','check signature','HTTP','Fix: verify the digital signature before installing.'],['c','l','signature mismatch','HTTP','The fake file is rejected and nothing is installed.']]],
+['Logging','Security cameras that nobody watches.','Attacks go unnoticed for weeks or months, so damage grows.','Log logins and key actions, set alerts for odd behaviour and actually review them.','Why are logs not enough?','Someone must receive alerts and review them.',[Dv('a',70,150,'attacker','Attacker'),Dv('s',330,150,'server','App server'),Dv('g',580,150,'doc','Log store'),Dv('t',740,60,'laptop','Security team')],[['a','s'],['s','g'],['g','t']],[['a','s','500 failed logins','RISK','An attacker hammers the login.'],['s','g','nothing logged','RISK','Without logging, nobody sees the attack.'],['a','s','data copied out','RISK','Weeks pass unnoticed.'],['s','g','500 failed logins','HTTP','Fix: log logins and key actions.'],['g','t','ALERT: odd behaviour','HTTP','Alerts reach a human.'],['t','s','block attacker','HTTP','The team reviews and reacts early.']]],
+['Exceptions','A door that unlocks when the power fails.','Errors can leak secrets or accidentally open access.','Plan for errors, show friendly messages and make failures default to “deny access”.','What does “fail closed” mean?','When something breaks, access is denied, not granted.',[Dv('u',70,150,'user','User'),Dv('a',400,150,'server','App'),Dv('d',700,150,'db','Database')],[['u','a'],['a','d']],[['u','a','unexpected input','HTTP','The app receives something it did not plan for.'],['a','d','query','APP','The app asks the database.'],['d','a','ERROR: timeout','RISK','Something goes wrong.'],['a','u','stack trace + secrets','RISK','Raw errors leak internals; some apps even fail open.'],['u','a','same input','HTTP','Fix: plan for errors.'],['a','u','friendly message · denied','HTTP','Show a safe message and fail closed.']]]];
+const rl=RK.map((r,i)=>{const [s,k]=SRC[i],c=s.cards[k],t=c.tag.split(' · ');return{group:'Part 4 · OWASP Top 10:2025',shortTitle:t[0]+' '+r[0],moduleTag:'Module 00 · OWASP 2025',title:t[0]+': '+c.title,lead:'<strong>'+t[0]+'</strong> is ranked <strong>#'+parseInt(t[0].slice(1))+'</strong> in the OWASP Top 10:2025 (course priority: '+t[1]+'). '+c.body,cards:[C('Easy example','In real life',r[1]),C('Why it matters','The damage',r[2]),C('How to prevent','The fix',r[3])],visuals:[Nv('Attack and defence',r[6],r[7],r[8])],consoleTitle:t[0]+' lab',presets:[s.presets[k]],notes:['<strong>Remember:</strong> '+r[3],'<strong>Course priority:</strong> '+t[1]+' (rank #'+parseInt(t[0].slice(1))+' in the OWASP Top 10:2025).'],promptQ:r[4],promptA:'<strong>'+r[5]+'</strong>'};});
+const FL=L[13];rl.push({group:'Part 4 · OWASP Top 10:2025',shortTitle:'Full List & Recap',moduleTag:'Module 00 · OWASP 2025',title:'The Complete OWASP Top 10:2025 and Recap',lead:'You have now met every risk. Here is the full ranked list to keep.',cards:[C('Critical','A01 – A03','Access control, misconfiguration, supply chain.'),C('High','A04 – A08','Cryptography, injection, design, authentication, integrity.'),C('Moderate','A09 – A10','Logging and alerting, exceptional conditions.')],consoleTitle:'OWASP 2025 master list',presets:[FL.presets[1]],notes:FL.notes,promptQ:'Which three risks are Critical?',promptA:'<strong>A01 Broken Access Control, A02 Security Misconfiguration, A03 Software Supply Chain Failures.</strong>'});
+L.splice(10,4,...rl);
+/* ===== FIXES: variety, security-models text, methods & status codes ===== */
+const FIX=[4,4,4,2,3,4,4,3,3,4];
+rl.slice(0,10).forEach((r,i)=>{r.visuals[0].fix=FIX[i];});
+[0,6,9].forEach(i=>{rl[i].visuals[0].view='seq';});
+L[4].visuals[0].view='seq';L[5].visuals[1].view='seq';L[6].visuals[1].view='seq';
+L[4].notes.push('<strong>Simplified:</strong> real TLS 1.3 merges some of these steps, but the idea is the same.');
+BP.notes.push('<strong>Priority labels</strong> (Critical, High, Moderate) are this course’s grouping, not an official OWASP score.');
+rl[10].presets[0].cols[2]='Priority';
+/* Security models: text only, no diagram */
+const SM=L[8];delete SM.visuals;
+SM.cards=[C('Least privilege','Minimum access','<em>A school clerk can read student records but cannot change exam marks.</em>'),C('Deny by default','Block unless allowed','<em>A new employee gets no payroll access until someone grants it.</em>'),C('Defense in depth','Many layers','<em>A house has a gate, a lock, an alarm and a camera. A thief must beat all four.</em>')];
+SM.presets[1]=P('2. Defense in depth','Gate → guard → ID → key card → camera','5 layers',['Layer','What it does','Everyday example'],[['Firewall','Blocks bad network traffic','The building gate'],['WAF','Filters web attacks','A guard checking bags'],['Authentication','Verifies who you are','Showing your ID at the door'],['Authorization','Checks what you may do','A key card that opens only your floor'],['Monitoring & logs','Notices odd behaviour','CCTV cameras']],[2,3],'<strong>If one layer fails,</strong> the others still protect you.');
+SM.presets[2]=P('3. Zero trust','Never trust, always verify','4 checks',['Check','Question','Everyday example'],[['Identity','Who are you?','Login plus a code from your phone (MFA)'],['Device','Is this device trusted?','Only company-managed laptops allowed'],['Location','Is this place expected?','A login from a new country is questioned'],['Action','Is this allowed for you?','Only managers may approve refunds']],[0,3],'<strong>Even insiders</strong> are checked every time they touch something sensitive.');
+SM.notes=['<strong>CIA triad, with examples:</strong> <em>Confidentiality</em> = only you can read your messages. <em>Integrity</em> = nobody secretly edits your bank balance. <em>Availability</em> = the shop website still works during a sale.','<strong>Authentication vs authorization:</strong> showing your passport proves <em>who you are</em>; your boarding pass decides <em>which plane you may enter</em>.','<strong>Same-Origin Policy:</strong> a page from <code>bank.com</code> cannot read data from <code>mail.com</code> in your browser, like one shop’s staff cannot open another shop’s till.','<strong>CORS:</strong> the other shop can say “my partner may read this”. A server lists which other sites are allowed.','<strong>CSP:</strong> a guest list for scripts. The page only runs scripts from places on the list, so injected scripts are blocked.','<strong>RBAC example:</strong> the role <code>teacher</code> may enter marks; the role <code>student</code> may only view them. People get permissions through their role.','<strong>Key idea:</strong> security models do not stop every attack; they limit how much damage one mistake can cause.'];
+SM.promptQ='A student account can open /admin. Which principle was broken, and what is the fix?';SM.promptA='<strong>Least privilege and deny by default.</strong> Block /admin unless the role is admin, and check it on the server.';
+/* HTTP methods */
+L[5].presets[1]=P('2. Methods table','GET · POST · PUT · PATCH · DELETE · HEAD · OPTIONS · QUERY','8 methods',['Method','What it does','Example request line','Simple meaning'],[['GET','Retrieve data from server','GET /products HTTP/1.1','“Give me the products.”'],['POST','Send data to server','POST /login HTTP/1.1','“Here is my data, please process it.”'],['PUT','Replace the entire resource','PUT /users/10 HTTP/1.1','“Replace user 10 with this new data.”'],['PATCH','Update part of a resource','PATCH /users/10 HTTP/1.1','“Change only this part of user 10.”'],['DELETE','Delete a resource','DELETE /users/10 HTTP/1.1','“Delete user 10.”'],['HEAD','Get only the headers (no body)','HEAD /products HTTP/1.1','“Tell me about the products, but do not send them.”'],['OPTIONS','Find supported methods','OPTIONS /api HTTP/1.1','“What can I do here?”'],['QUERY','Send a query in the body (emerging standard)','QUERY /search HTTP/1.1','“Run this query and give me the result.”']],[0,1],'<strong>Tip:</strong> the method says <em>what you want to do</em>, the path says <em>to which resource</em>.');
+L[5].presets.push(P('3. Restaurant analogy','Methods as ordering food','7 methods',['Method','At a restaurant'],[['GET','Reading the menu'],['POST','Placing a new order'],['PUT','Replacing your whole order with a new one'],['PATCH','Changing just the drink'],['DELETE','Cancelling the order'],['HEAD','Asking if a dish exists, without it being brought'],['OPTIONS','Asking what you are allowed to order']],[0,1],'<strong>Easy to remember:</strong> read, create, replace, tweak, cancel.'),P('4. Safe & repeatable','Does it change data? Is repeating it harmless?','7 methods',['Method','Safe (changes nothing)','Same result if repeated'],[['GET','Yes','Yes'],['HEAD','Yes','Yes'],['OPTIONS','Yes','Yes'],['PUT','No','Yes'],['DELETE','No','Yes'],['POST','No','No: may create two orders'],['PATCH','No','Not guaranteed']],[5],'<strong>Why it matters:</strong> double-clicking “Pay” sends POST twice and may charge you twice.','warn'));
+/* HTTP status codes */
+const SC=['Code','Meaning','When it is used','Easy example'];
+L[6].presets=[L[6].presets[0],L[6].presets[1],
+P('3. 1xx and 2xx','Informational and success','5 codes',SC,[['100','Continue','Server got the request start; client can continue','Uploading a big file: “go ahead”'],['101','Switching Protocols','Server switches to another protocol','A chat page upgrades to WebSocket'],['200','OK','The request was successful','Opening a web page'],['201','Created','A new resource was created','Signing up creates a new user'],['204','No Content','Success, but nothing to send back','Deleting an item']],[2,3,4],'<strong>2xx is what you want to see.</strong>'),
+P('4. 3xx redirects','Further action needed','3 codes',SC,[['301','Moved Permanently','The resource has a new permanent URL','http:// sends you to https://'],['302','Found (temporary)','The resource has a temporary new URL','After login you are sent to the dashboard'],['304','Not Modified','Nothing changed; use your saved copy (caching)','The browser reuses a saved image']],[0,1,2],'<strong>3xx tells the browser to look somewhere else.</strong>'),
+P('5. 4xx client errors','There is a problem with the request','6 codes',SC,[['400','Bad Request','The server cannot understand the request','A form sent broken data'],['401','Unauthorized','Authentication is required or failed','Wrong password'],['403','Forbidden','You do not have permission','A student opens /admin'],['404','Not Found','The resource does not exist','A typo in the URL'],['405','Method Not Allowed','That method is not allowed here','DELETE on a read-only page'],['429','Too Many Requests','Rate limiting','Too many login attempts']],[1,2],'<strong>401 vs 403:</strong> 401 = “who are you?”, 403 = “I know you, but no”.','warn'),
+P('6. 5xx server errors','The server failed a valid request','5 codes',SC,[['500','Internal Server Error','A general error on the server','A bug in the server code'],['501','Not Implemented','The server does not support that feature','An unknown method'],['502','Bad Gateway','Got an invalid response from another server','A proxy receives garbage from the app'],['503','Service Unavailable','Temporarily unavailable','Maintenance or overload'],['504','Gateway Timeout','No answer in time from another server','A slow backend']],[0,3],'<strong>5xx is the server’s fault, not yours.</strong>','warn')];
+
+COURSE.lessons.forEach((l,i)=>{l.moduleTag=l.moduleTag.replace(/Module \d+/,'Module '+String(i+1).padStart(2,'0'));});
+
+/* ===================== ENGINE ===================== */
+const LESSONS = COURSE.lessons;
+let cur = 0;
+const visited = new Set([0]);
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const pad = n => String(n + 1).padStart(2, '0');
+
+function renderSyllabus() {
+  let html = '', last = '';
+  LESSONS.forEach((l, i) => {
+    if (l.group !== last) { html += '<div class="sn-group">' + esc(l.group) + '</div>'; last = l.group; }
+    html += '<button class="sn-item ' + (i === cur ? 'active ' : '') + (visited.has(i) ? 'visited' : '') + '" onclick="loadLesson(' + i + ')">' +
+      '<span class="sn-item-left"><span class="sn-num">' + pad(i) + '</span><span>' + esc(l.shortTitle) + '</span></span><span class="sn-check">✓</span></button>';
+  });
+  $('syllabus').innerHTML = html;
+  $('countLabel').textContent = visited.size + ' / ' + LESSONS.length + ' viewed';
+}
+
+function loadLesson(i) {
+  cur = Math.max(0, Math.min(i, LESSONS.length - 1));
+  visited.add(cur);
+  const l = LESSONS[cur], n = LESSONS.length;
+  $('topProgressText').textContent = 'Lesson ' + pad(cur) + ' / ' + String(n).padStart(2, '0');
+  $('topProgressFill').style.width = ((cur + 1) / n * 100) + '%';
+  $('moduleTag').textContent = l.moduleTag;
+  $('stepCount').textContent = 'Lesson ' + pad(cur) + ' of ' + n;
+  $('lessonTitle').textContent = l.title;
+  $('lessonLead').innerHTML = l.lead;
+  $('cards').innerHTML = l.cards.map(c =>
+    '<div class="concept-card"><span class="cc-tag">' + esc(c.tag) + '</span><div class="cc-title">' + esc(c.title) + '</div><p class="cc-body">' + c.body + '</p></div>').join('');
+  renderVisuals(l);
+  $('consoleTitle').textContent = l.consoleTitle;
+  $('presets').innerHTML = l.presets.map((p, k) => '<button class="cb-btn" onclick="runPreset(' + k + ')">' + esc(p.label) + '</button>').join('');
+  runPreset(0);
+  $('noteBadge').textContent = 'Lesson ' + pad(cur);
+  $('notes').innerHTML = l.notes.map(x => '<li>' + x + '</li>').join('');
+  $('promptQ').textContent = l.promptQ;
+  $('promptA').innerHTML = l.promptA;
+  $('promptA').classList.remove('show');
+  $('promptBtn').textContent = 'Reveal answer';
+  $('prevBtn').disabled = cur === 0;
+  $('nextBtn').disabled = cur === n - 1;
+  renderSyllabus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function runPreset(k) {
+  const p = LESSONS[cur].presets[k];
+  document.querySelectorAll('#presets .cb-btn').forEach((b, i) => b.classList.toggle('active', i === k));
+  $('queryText').innerHTML = p.query;
+  $('statusBadge').textContent = p.status;
+  $('statusBadge').className = 'cb-status' + (p.statusType ? ' ' + p.statusType : '');
+  if (p.flow) {
+    $('tableWrap').innerHTML = '<div class="flow">' + p.flow.map(f => '<div class="fc"><span class="fc-s">' + esc(f[0]) + '</span><div class="fc-c">' + esc(f[1]) + '</div><div class="fc-d">' + esc(f[2]) + '</div></div>').join('') + '</div>';
+  } else if (p.error) {
+    $('tableWrap').innerHTML = '<div style="padding:14px;color:var(--danger);font:13px \'JetBrains Mono\',monospace">' + esc(p.error) + '</div>';
+  } else {
+    const hl = p.highlight || [];
+    $('tableWrap').innerHTML = '<table class="cb-table"><thead><tr>' + p.cols.map(c => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' +
+      p.rows.map((r, i) => '<tr class="' + (hl.includes(i) ? 'matched' : 'filtered') + '">' + r.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+  }
+  $('explain').innerHTML = p.explain;
+}
+
+
+/* ===================== VISUAL ENGINE ===================== */
+const AC={red:'#fb7185',blue:'#38bdf8',green:'#34d399',yellow:'#fbbf24',purple:'#a78bfa'};
+let VS={ti:0,st:0,tm:null,sp:1,pn:{}};
+const bx=n=>({w:n.w||132,h:n.h||78});
+function geom(d,e){
+  const A=d.nodes.find(n=>n.id===e.a),B=d.nodes.find(n=>n.id===e.b),a=bx(A),b=bx(B),o=e.o||0;
+  const ac={x:A.x+a.w/2,y:A.y+a.h/2},bc={x:B.x+b.w/2,y:B.y+b.h/2};
+  if(Math.abs(bc.x-ac.x)>=Math.abs(bc.y-ac.y)){const k=bc.x>ac.x?1:-1;return{x1:ac.x+k*a.w/2,y1:ac.y+o,x2:bc.x-k*b.w/2,y2:bc.y+o};}
+  const k=bc.y>ac.y?1:-1;return{x1:ac.x+o,y1:ac.y+k*a.h/2,x2:bc.x+o,y2:bc.y-k*b.h/2};
+}
+function drawDiagram(d,si){
+  const s=d.steps[si],hE=s.e||[],hN=s.n||[],bad=s.bad||[];
+  let h='<svg class="diag" viewBox="0 0 800 '+(d.h||290)+'" role="img"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="ahOn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mkOn"/></marker></defs>';
+  d.edges.forEach((e,i)=>{const g=geom(d,e),on=hE.includes(i);
+    h+='<line class="de'+(on?' on':'')+'" x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" marker-end="url(#'+(on?'ahOn':'ah')+')"/>';
+    if(e.l)h+='<text class="dl'+(on?' on':'')+'" x="'+(g.x1+g.x2)/2+'" y="'+((g.y1+g.y2)/2-6)+'">'+esc(e.l)+'</text>';});
+  d.nodes.forEach(n=>{const b=bx(n),cx=n.x+b.w/2,cy=n.y+b.h/2,c=bad.includes(n.id)?' bad':hN.includes(n.id)?' on':'';
+    h+='<rect class="dn'+c+'" x="'+n.x+'" y="'+n.y+'" width="'+b.w+'" height="'+b.h+'" rx="12"/>';
+    if(b.h<60)h+='<text class="dt" x="'+cx+'" y="'+(cy+5)+'">'+n.i+' '+esc(n.t)+'</text>';
+    else h+='<text class="di" x="'+cx+'" y="'+(cy-6)+'">'+n.i+'</text><text class="dt" x="'+cx+'" y="'+(cy+15)+'">'+esc(n.t)+'</text>'+(n.s?'<text class="ds" x="'+cx+'" y="'+(cy+31)+'">'+esc(n.s)+'</text>':'');});
+  hE.forEach(i=>{const g=geom(d,d.edges[i]);h+='<circle r="6" class="pk"><animateMotion dur="1.3s" repeatCount="indefinite" path="M'+g.x1+' '+g.y1+' L'+g.x2+' '+g.y2+'"/></circle>';});
+  return h+'</svg>';
+}
+function renderVisuals(l){
+  clearInterval(VS.tm);VS.tm=null;VS.ti=0;VS.st=0;VS.pn={};
+  const blk=$('visBlock');
+  if(!l.visuals){blk.style.display='none';return;}
+  blk.style.display='';$('visSub').textContent='Step through it or press Play';renderVisual(true);
+}
+const PC={DNS:'#fbbf24',REDIR:'#fbbf24',TCP:'#38bdf8',TLS:'#a78bfa',HTTP:'#34d399',APP:'#38bdf8',RISK:'#fb7185',ERR:'#fb7185',BLOCK:'#fb7185'};
+const pcol=p=>PC[p[3]]||'var(--accent)',SP=[0.5,1,2];
+const IC={laptop:'<rect x="-22" y="-16" width="44" height="28" rx="3"/><path d="M-28 16h56l-5-4h-46z"/>',router:'<rect x="-24" y="-2" width="48" height="16" rx="4"/><path d="M-14 -2v-13M14 -2v-13"/><circle cx="-12" cy="6" r="1.8"/><circle cx="-4" cy="6" r="1.8"/>',cloud:'<path d="M-22 12a10 10 0 0 1 2-19a14 14 0 0 1 27-3a11 11 0 0 1 5 22z"/>',server:'<rect x="-20" y="-20" width="40" height="12" rx="3"/><rect x="-20" y="-6" width="40" height="12" rx="3"/><rect x="-20" y="8" width="40" height="12" rx="3"/><circle cx="-13" cy="-14" r="1.6"/><circle cx="-13" cy="0" r="1.6"/><circle cx="-13" cy="14" r="1.6"/>',db:'<ellipse cx="0" cy="-14" rx="18" ry="6"/><path d="M-18 -14v26a18 6 0 0 0 36 0v-26M-18 -2a18 6 0 0 0 36 0M-18 8a18 6 0 0 0 36 0"/>',user:'<circle cx="0" cy="-10" r="9"/><path d="M-16 18c0-14 8-20 16-20s16 6 16 20z"/>',attacker:'<circle cx="0" cy="-10" r="9"/><path d="M-16 18c0-14 8-20 16-20s16 6 16 20zM-6 -12h12"/>',box:'<path d="M-18 -8l18-10l18 10v18l-18 10l-18-10zM-18 -8l18 10l18-10M0 2v18"/>',doc:'<rect x="-14" y="-20" width="28" height="40" rx="3"/><path d="M-8 -8h16M-8 0h16M-8 8h10"/>'};
+const cnt=v=>v.type==='net'?v.packets.length:v.steps.length,dev=(v,id)=>v.devices.find(x=>x.id===id);
+function route(v,s,d){const adj={};v.links.forEach(([a,b])=>{(adj[a]=adj[a]||[]).push(b);(adj[b]=adj[b]||[]).push(a);});const q=[[s]],seen={[s]:1};while(q.length){const p=q.shift(),l=p[p.length-1];if(l===d)return p;(adj[l]||[]).forEach(n=>{if(!seen[n]){seen[n]=1;q.push(p.concat(n));}});}return [s,d];}
+function drawNet(v,si){
+  const p=v.packets[si],path=route(v,p[0],p[1]),pts=path.map(id=>{const d=dev(v,id);return d.x+' '+d.y;}),blocked=p[3]==='BLOCK';
+  let h='<svg class="diag" viewBox="0 0 800 300" role="img">';
+  v.links.forEach(([a,b])=>{const A=dev(v,a),B=dev(v,b);h+='<line class="lk" x1="'+A.x+'" y1="'+A.y+'" x2="'+B.x+'" y2="'+B.y+'"/>';});
+  h+='<polyline class="lk on" points="'+pts.join(' ')+'"/>';
+  v.devices.forEach(d=>{const on=path.includes(d.id),bad=d.k==='attacker'||(blocked&&d.id===p[1]);
+    h+='<g class="dv'+(bad?' bad':'')+(on?' on':'')+'" transform="translate('+d.x+','+d.y+')">'+IC[d.k]+'</g><text class="dt" x="'+d.x+'" y="'+(d.y+40)+'">'+esc(d.t)+'</text>'+(d.s?'<text class="ds" x="'+d.x+'" y="'+(d.y+54)+'">'+esc(d.s)+'</text>':'');});
+  const dur=(Math.min(0.8*(pts.length-1),2.6)/SP[VS.sp]).toFixed(2);
+  h+='<g><animateMotion dur="'+dur+'s" path="M'+pts.join(' L')+'" fill="freeze"/><circle r="8" style="fill:'+pcol(p)+'"/><text class="pl" y="-15">'+esc(p[2])+'</text></g></svg>';
+  return h;
+}
+function seqSvg(v,si,an){
+  const ids=[];v.packets.forEach(p=>[p[0],p[1]].forEach(x=>{if(!ids.includes(x))ids.push(x);}));
+  const k=ids.length,X=i=>k>1?90+i*(620/(k-1)):400,H=70+v.packets.length*30;
+  let h='<svg class="diag" viewBox="0 0 800 '+H+'"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker></defs>';
+  ids.forEach((id,i)=>{h+='<text class="dt" x="'+X(i)+'" y="22">'+esc(dev(v,id).t)+'</text><line x1="'+X(i)+'" y1="34" x2="'+X(i)+'" y2="'+(H-10)+'" style="stroke:#334155;stroke-dasharray:4 4;stroke-width:2"/>';});
+  v.packets.forEach((p,j)=>{const a=X(ids.indexOf(p[0])),b=X(ids.indexOf(p[1])),y=62+j*30;
+    h+='<g style="opacity:'+(j<=si?1:.25)+'"><line x1="'+a+'" y1="'+y+'" x2="'+b+'" y2="'+y+'" style="stroke:'+pcol(p)+';stroke-width:'+(j===si?3:2)+'" marker-end="url(#ah)"/><text class="dl'+(j===si?' on':'')+'" x="'+(a+b)/2+'" y="'+(y-6)+'">'+esc(p[2])+'</text></g>';});
+  if(an){const p=v.packets[si],a=X(ids.indexOf(p[0])),b=X(ids.indexOf(p[1])),y=62+si*30;h+='<circle r="7" style="fill:'+pcol(p)+'"><animateMotion dur="1.2s" path="M'+a+' '+y+' L'+b+' '+y+'" fill="freeze"/></circle>';}
+  return h+'</svg>';
+}
+function netPanels(v,si){
+  let h='';const p=v.packets[si];
+  if(VS.pn.list)h+='<div class="vis-pan"><table class="cb-table"><thead><tr><th>#</th><th>From → To</th><th>Protocol</th><th>Info</th></tr></thead><tbody>'+v.packets.map((q,j)=>'<tr class="'+(j===si?'cur':'')+'" style="cursor:pointer;'+(j>si?'opacity:.45':'')+'" onclick="visJump('+j+')"><td>'+(j+1)+'</td><td>'+esc(dev(v,q[0]).t)+' → '+esc(dev(v,q[1]).t)+'</td><td><span class="chip" style="background:color-mix(in srgb,'+pcol(q)+' 18%,transparent);color:'+pcol(q)+'">'+esc(q[3])+'</span></td><td>'+esc(q[2])+'</td></tr>').join('')+'</tbody></table></div>';
+  if(VS.pn.seq&&v.view!=='seq')h+='<div class="vis-pan">'+seqSvg(v,si)+'</div>';
+  if(VS.pn.insp)h+='<div class="vis-pan"><div class="insp"><b>Packet</b><span>'+(si+1)+' of '+v.packets.length+'</span><b>Label</b><span>'+esc(p[2])+'</span><b>From</b><span>'+esc(dev(v,p[0]).t)+'</span><b>To</b><span>'+esc(dev(v,p[1]).t)+'</span><b>Path</b><span>'+route(v,p[0],p[1]).map(i=>esc(dev(v,i).t)).join(' → ')+'</span><b>Protocol</b><span>'+esc(p[3])+'</span><b>Meaning</b><span>'+esc(p[4])+'</span></div></div>';
+  return h;
+}
+function renderVisual(keep){
+  if(!keep){clearInterval(VS.tm);VS.tm=null;}
+  const vs=LESSONS[cur].visuals,v=vs[VS.ti],n=v.type==='anatomy'?0:cnt(v);
+  let h=vs.length>1?'<div class="vis-tabs">'+vs.map((x,i)=>'<button class="cb-btn'+(i===VS.ti?' active':'')+'" onclick="visTab('+i+')">'+esc(x.tab)+'</button>').join('')+'</div>':'';
+  const ctl='<div class="vis-ctrl"><button class="cb-btn" onclick="visStep(-1)">◀ Prev</button><button class="cb-btn" onclick="visPlay()">'+(VS.tm?'❚❚ Pause':'▶ Play')+'</button><button class="cb-btn" onclick="visStep(1)">Next ▶</button><button class="cb-btn" onclick="visJump(0)">↺ Restart</button>'+(v.type==='net'?'<button class="cb-btn" onclick="visSpeed()">Speed '+SP[VS.sp]+'×</button>':'')+'<span class="vis-n">Step '+(VS.st+1)+' / '+n+'</span></div>';
+  if(v.type==='anatomy'){
+    h+='<div class="anat">'+v.parts.map(p=>{const c=AC[p.c];return '<div class="ap"><pre class="ac" style="border-color:'+c+';background:color-mix(in srgb,'+c+' 13%,transparent)">'+esc(p.code)+'</pre><span class="aar" style="color:'+c+'">➜</span><div class="al" style="border-color:'+c+'"><b style="color:'+c+'">'+esc(p.l)+'</b><span>'+esc(p.n)+'</span></div></div>';}).join('')+'</div>';
+  }else if(v.type==='net'){
+    const p=v.packets[VS.st];
+    const fx=v.fix!==undefined,bad=fx&&VS.st<v.fix;
+    h+='<div class="vis-card">'+(v.view==='seq'?seqSvg(v,VS.st,1):drawNet(v,VS.st))+ctl+'<div class="vis-cap"'+(bad?' style="background:var(--danger-soft)"':'')+'>'+(fx?'<span class="chip" style="margin-right:8px;background:'+(bad?'var(--danger-soft);color:var(--danger)':'var(--accent-soft);color:var(--accent)')+'">'+(bad?'⚠ Without the fix':'✔ With the fix')+'</span>':'')+'<b>'+esc(p[2])+'</b> · '+esc(p[4])+'</div><div class="vis-tg"><button class="cb-btn'+(VS.pn.list?' active':'')+'" onclick="visPanel(\'list\')">Packet list</button>'+(v.view==='seq'?'':'<button class="cb-btn'+(VS.pn.seq?' active':'')+'" onclick="visPanel(\'seq\')">Sequence</button>')+'<button class="cb-btn'+(VS.pn.insp?' active':'')+'" onclick="visPanel(\'insp\')">Inspector</button></div>'+netPanels(v,VS.st)+'</div>';
+  }else{
+    h+='<div class="vis-card">'+drawDiagram(v,VS.st)+ctl+'<div class="vis-cap">'+v.steps[VS.st].t+'</div></div>';
+  }
+  $('visual').innerHTML=h;
+}
+function visTab(i){VS.ti=i;VS.st=0;renderVisual();}
+function visStep(d){const n=cnt(LESSONS[cur].visuals[VS.ti]);VS.st=(VS.st+d+n)%n;renderVisual();}
+function visJump(i){VS.st=i;renderVisual();}
+function visSpeed(){VS.sp=(VS.sp+1)%3;renderVisual(true);if(VS.tm){visPlay();visPlay();}}
+function visPanel(k){VS.pn[k]=!VS.pn[k];renderVisual(true);}
+function visPlay(){
+  if(VS.tm){clearInterval(VS.tm);VS.tm=null;renderVisual(true);return;}
+  VS.tm=setInterval(()=>{const n=cnt(LESSONS[cur].visuals[VS.ti]);VS.st=(VS.st+1)%n;renderVisual(true);},3200/SP[VS.sp]);renderVisual(true);
+}
+const stepLesson = d => loadLesson(cur + d);
+function toggleAnswer() {
+  const a = $('promptA'); a.classList.toggle('show');
+  $('promptBtn').textContent = a.classList.contains('show') ? 'Hide answer' : 'Reveal answer';
+}
+function toggleModal(show) { $('modal').classList.toggle('open', show); }
+
+/* ===================== THEMES ===================== */
+const THEMES = {
+  ocean:   { accent:'#38bdf8', bg:'#090a0f', surface:'#12141c', subtle:'#171a24', console:'#0c0e14', border:'#1e2230', cborder:'#222634' },
+  emerald: { accent:'#34d399', bg:'#08100d', surface:'#101a16', subtle:'#15211c', console:'#0a120f', border:'#1b2b24', cborder:'#1f3029' },
+  violet:  { accent:'#a78bfa', bg:'#0b0912', surface:'#14111f', subtle:'#1a1628', console:'#0e0b16', border:'#241f36', cborder:'#2a2440' },
+  rose:    { accent:'#fb7185', bg:'#110a0d', surface:'#1b1216', subtle:'#22171c', console:'#140c10', border:'#33202a', cborder:'#3a2530' },
+  amber:   { accent:'#fbbf24', bg:'#100d07', surface:'#1a160e', subtle:'#211c12', console:'#130f08', border:'#31281a', cborder:'#3a301e' },
+  orange:  { accent:'#fb923c', bg:'#110b07', surface:'#1b130d', subtle:'#221911', console:'#140d08', border:'#33241a', cborder:'#3d2b1e' },
+  indigo:  { accent:'#818cf8', bg:'#090a14', surface:'#121528', subtle:'#181b33', console:'#0c0e1d', border:'#212545', cborder:'#282d52' },
+  teal:    { accent:'#2dd4bf', bg:'#07100f', surface:'#0f1a19', subtle:'#142120', console:'#091211', border:'#1a2c2a', cborder:'#1f3634' }
+};
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.ocean;
+  const r = document.documentElement.style;
+  const rgb = t.accent.match(/\w\w/g).map(h => parseInt(h, 16)).join(',');
+  r.setProperty('--accent', t.accent);
+  r.setProperty('--accent-soft', 'rgba(' + rgb + ',.1)');
+  r.setProperty('--accent-border', 'rgba(' + rgb + ',.28)');
+  r.setProperty('--bg', t.bg);
+  r.setProperty('--surface', t.surface);
+  r.setProperty('--surface-subtle', t.subtle);
+  r.setProperty('--console-bg', t.console);
+  r.setProperty('--border', t.border);
+  r.setProperty('--console-border', t.cborder);
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('on', d.dataset.t === name));
+}
+
+/* ===================== INIT ===================== */
+const urlTheme = new URLSearchParams(location.search).get('theme');
+if (COURSE.showThemePicker) {
+  $('themeDots').innerHTML = Object.keys(THEMES).map(k =>
+    '<button class="theme-dot" data-t="' + k + '" title="' + k + '" style="background:' + THEMES[k].accent + '" onclick="applyTheme(\'' + k + '\')"></button>').join('');
+}
+applyTheme(urlTheme && THEMES[urlTheme] ? urlTheme : COURSE.theme);
+$('brandTitle').textContent = COURSE.brand;
+$('brandSub').textContent = COURSE.subtitle;
+document.title = COURSE.brand;
+$('modalTitle').textContent = COURSE.modalTitle;
+$('refHead').innerHTML = COURSE.refColumns.map(c => '<th>' + esc(c) + '</th>').join('');
+$('refBody').innerHTML = COURSE.reference.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('');
+
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowRight') stepLesson(1);
+  if (e.key === 'ArrowLeft') stepLesson(-1);
+  if (e.key === 'Escape') toggleModal(false);
+});
+window.addEventListener('DOMContentLoaded', () => loadLesson(0));
+
+/* =====================================================================
+   PROTECTION + WATERMARK (deterrents; they raise effort, not guarantee)
+   ===================================================================== */
+(function () {
+  const WM = COURSE.watermark;
+  const isField = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA');
+
+  // Block context menu, copy, cut, drag, select, and text-selection start
+  ['contextmenu', 'copy', 'cut', 'dragstart', 'selectstart'].forEach(ev =>
+    document.addEventListener(ev, e => { if (!isField(e.target)) e.preventDefault(); }));
+
+  // Block common shortcuts: save, view-source, print, select-all, copy, devtools
+  document.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    const ctrl = e.ctrlKey || e.metaKey;
+    const block =
+      e.key === 'F12' ||
+      (ctrl && ['s', 'u', 'p', 'a', 'c', 'x'].includes(k) && !isField(e.target)) ||
+      (ctrl && e.shiftKey && ['i', 'j', 'c', 'k'].includes(k)) ||
+      (e.metaKey && e.altKey && ['i', 'j', 'c', 'u'].includes(k));
+    if (block) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  // Premium bottom watermark: glass pill, built with inline styles so it survives stylesheet edits
+  function buildBar() {
+    const bar = document.createElement('div');
+    bar.id = 'wm-bar';
+    bar.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483647;pointer-events:none;display:flex;align-items:center;gap:9px;padding:7px 16px 7px 12px;border-radius:99px;background:color-mix(in srgb,var(--surface) 78%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--accent-border);box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);font:500 11.5px Inter,sans-serif;color:var(--text-secondary);letter-spacing:.2px;white-space:nowrap';
+    bar.innerHTML = '<i style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);display:block"></i>' +
+      '<span>Crafted by</span><b style="font:600 12px \'JetBrains Mono\',monospace;color:var(--accent)">' + WM + '</b>';
+    return bar;
+  }
+  function ensureBar() {
+    let bar = document.getElementById('wm-bar');
+    if (bar) {
+      const cs = getComputedStyle(bar), r = bar.getBoundingClientRect();
+      const hidden = cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.5 || r.width < 40 || r.height < 10 || bar.textContent.indexOf(WM) === -1;
+      if (!hidden) return;
+      bar.remove();
+    }
+    document.body.appendChild(buildBar());
+  }
+  ensureBar();
+  new MutationObserver(ensureBar).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+  setInterval(ensureBar, 2000);
+})();
+</script>
+</body>
+</html>
